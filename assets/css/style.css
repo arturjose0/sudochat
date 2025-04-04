@@ -153,35 +153,35 @@ main {
 
       .mensagem {
         display: grid;
-        grid-template-areas:
-          "img nome hora"
-          "img texto hora";
+        grid-template-columns: auto 1fr auto;
         height: 70px;
         border-radius: 7px;
         padding: 0.6em;
         align-items: center;
+        /* justify-content: left; */
+
+        .dois {
+          margin-left: 10px;
+        }
 
         img {
           width: 40px;
           height: 40px;
           border-radius: 50%;
-          grid-area: img;
         }
 
         .nome {
-          grid-area: nome;
           font-weight: bold;
+          text-align: left;
         }
 
         p {
-          grid-area: texto;
           font-size: 0.8em;
           color: #a1a1a1;
         }
 
         span {
           /* border-left: 2px solid #edf0f6; */
-          grid-area: hora;
           font-size: 0.8em;
           color: #a1a1a1;
           height: 100%;
@@ -207,6 +207,89 @@ main {
       grid-template-rows: 1fr 3em;
       border-radius: 10px;
       padding: 12px;
+
+      .conteudo {
+        max-height: calc(
+          100vh - 7em
+        ); /* Define a altura máxima antes de ativar a rolagem */
+        overflow-y: auto; /* Habilita a rolagem vertical quando necessário */
+        display: flex;
+        flex-direction: column; /* Garantir que o conteúdo fique empilhado de forma vertical */
+
+        .caixa {
+          /* border: 1px solid; */
+
+          .receptor,
+          .emissor {
+            display: flex;
+            align-items: end;
+            gap: 5px;
+
+            .texto {
+              /* border: 1px solid; */
+              max-width: 70%;
+            }
+
+            .datahora {
+              font-size: 10px;
+              margin: 5px;
+            }
+            .msg {
+              padding: 15px 20px;
+              background-color: #fff;
+              border-radius: 20px;
+              position: relative;
+              box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Sombras suaves para o balão */
+              max-width: 100%; /* Limita a largura para dar um efeito mais de "balão" */
+              margin: 10px 0; /* Espaçamento entre as mensagens */
+              font-size: 16px; /* Tamanho da fonte */
+              line-height: 1.4;
+            }
+
+            .msg::after {
+              content: "";
+              position: absolute;
+              bottom: -10px; /* Coloca a seta logo abaixo do balão */
+              left: 0; /* Posiciona a seta no canto inferior esquerdo */
+              transform: translateX(
+                -50%
+              ); /* Garante que a seta esteja no centro exato */
+              width: 0;
+              height: 0;
+              border-left: 10px solid transparent; /* Bordas para criar o triângulo */
+              border-right: 10px solid transparent; /* Bordas para criar o triângulo */
+              border-top: 10px solid #fff; /* Cor da seta (mesma cor do balão) */
+            }
+          }
+
+          .emissor {
+            /* justify-self: end; */
+            display: flex;
+            justify-content: end;
+            .msg {
+              padding: 15px 20px;
+              background-color: #ced2e3;
+              border-radius: 20px;
+              position: relative;
+              box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Sombras suaves para o balão */
+              max-width: 100%; /* Limita a largura para dar um efeito mais de "balão" */
+              margin: 10px 0; /* Espaçamento entre as mensagens */
+              font-size: 16px; /* Tamanho da fonte */
+              line-height: 1.4;
+            }
+
+            .msg::after {
+              all: unset;
+            }
+          }
+
+          img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+          }
+        }
+      }
 
       form {
         display: flex;
