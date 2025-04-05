@@ -149,7 +149,7 @@ setInterval(() => {
 }, 1000);
 
 function tocarSom() {
-    const som = new Audio('../../vendor/musicas/notification.mp3'); // Caminho para o ficheiro de áudio
+    const som = new Audio('../musics/notification.mp3'); // Caminho para o ficheiro de áudio
     som.play().catch(function (error) {
         console.error("Erro ao tentar reproduzir o som:", error);
     });
