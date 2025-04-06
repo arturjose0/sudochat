@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!-- Coding By CodingNepal - youtube.com/codingnepal -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SudoChat | Login</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+    <link
+      rel="shortcut icon"
+      href="../vendor/assets/img/SudoChat.png"
+      type="image/x-icon"
+    />
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>SudoChat</header>
+      <form
+        action="../vendor/backend/sudomake.php"
+        method="POST"
+        id="formulario"
+      >
+        <div class="field email">
+          <div class="input-area">
+            <input
+              type="text"
+              placeholder="Digite o teu email"
+              name="login"
+              autocomplete="username"
+            />
+            <i class="icon fas fa-envelope"></i>
+            <i class="error error-icon fas fa-exclamation-circle"></i>
+          </div>
+          <div class="error error-txt">Insira um e-mail</div>
+        </div>
+        <div class="field password">
+          <div class="input-area">
+            <input
+              type="password"
+              placeholder="Password"
+              name="password"
+              autocomplete="current-password"
+            />
+            <i class="icon fas fa-lock"></i>
+            <i class="error error-icon fas fa-exclamation-circle"></i>
+          </div>
+          <div class="error error-txt">Digite a tua palavra passe</div>
+        </div>
+        <button type="submit">
+          Iniciar Sessão
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </form>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="../vendor/assets/js/josearturkassala.js"></script>
+  </body>
+</html>

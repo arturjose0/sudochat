@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Alerta Estilo SweetAlert2</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Container do alerta */
+      .alert-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      /* Alerta */
+      .alert {
+        background-color: #4caf50;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        min-width: 250px;
+        max-width: 300px;
+        position: relative;
+        opacity: 0;
+        transform: translateX(100%);
+        animation: slideIn 0.4s forwards;
+      }
+
+      /* Barra de progresso */
+      .progress-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        background-color: #fff;
+        width: 100%;
+        animation: shrink linear forwards;
+      }
+
+      /* Animação do alerta entrando */
+      @keyframes slideIn {
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      /* Animação da barra de progresso encolhendo */
+      @keyframes shrink {
+        from {
+          width: 100%;
+        }
+        to {
+          width: 0%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <button onclick="showAlert('Mensagem enviada com sucesso!', 4000)">
+      Mostrar Alerta
+    </button>
+
+    <div class="alert-container" id="alertContainer"></div>
+
+    <script>
+      function showAlert(message, duration = 3000) {
+        const container = document.getElementById("alertContainer");
+
+        const alert = document.createElement("div");
+        alert.classList.add("alert");
+
+        alert.innerText = message;
+
+        // Criar a barra de progresso
+        const progress = document.createElement("div");
+        progress.classList.add("progress-bar");
+        progress.style.animationDuration = duration + "ms";
+
+        alert.appendChild(progress);
+        container.appendChild(alert);
+
+        // Remover após o tempo definido
+        setTimeout(() => {
+          alert.style.opacity = "0";
+          alert.style.transform = "translateX(100%)";
+          setTimeout(() => container.removeChild(alert), 400); // Espera a animação sair
+        }, duration);
+      }
+    </script>
+  </body>
+</html>
