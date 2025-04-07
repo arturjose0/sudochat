@@ -32,7 +32,7 @@ O SudoChat é um sistema de chat em tempo real que permite a comunicação entre
 
 1.  Clone o repositório para o seu servidor web.
 2.  Crie um banco de dados MySQL/MariaDB e importe o arquivo `database.sql` (se houver) para criar as tabelas necessárias.
-3.  Configure as credenciais do banco de dados no arquivo `config.php`.
+3.  Configure as credenciais do banco de dados no arquivo `.env.php`.
 4.  Abra o seu navegador web e acesse o diretório onde o projeto foi instalado.
 
 ## Contribuição

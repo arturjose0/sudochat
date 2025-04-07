@@ -44,25 +44,25 @@ if (($_SERVER["REQUEST_METHOD"] === "POST" && validarLogin()) || $_SERVER["REQUE
 
         // enviar mensagem
         if (isset($_POST['mensagem']) && isset($_POST['receptor']) && isset($_FILES['anexos'])) {
-            try {
 
-                if (empty($_FILES['anexos']['name'][0]) && empty($_POST['mensagem'])) {
-                    $resp["status"] = "error";
-                    $resp["msg"] = "A mensagem não pode ser vazia";
-                    echo json_encode($resp);
+            if (empty($_FILES['anexos']['name'][0]) && empty($_POST['mensagem'])) {
+                $resp["status"] = "error";
+                $resp["msg"] = "A mensagem não pode ser vazia";
+                echo json_encode($resp);
 
-                    exit;
-                }
+                exit;
+            }
 
-                $mensagem = criptografar(trim($_POST['mensagem'])); // Remover espaços em branco extras
-                $anexos = trim($_POST['mensagem']); // Remover espaços em branco extras
-                $emissor = filter_var(decriptografar($_SESSION["SUDOCHAT_SESSAO_ID"]), FILTER_SANITIZE_NUMBER_INT); // ID do usuário que enviou a mensagem
-                $receptor = filter_var(decriptografar($_POST['receptor']), FILTER_SANITIZE_NUMBER_INT); // ID do usuário que recebe a mensagem
+            $mensagem = criptografar(trim($_POST['mensagem'])); // Remover espaços em branco extras
+            $anexos = trim($_POST['mensagem']); // Remover espaços em branco extras
+            $emissor = filter_var(decriptografar($_SESSION["SUDOCHAT_SESSAO_ID"]), FILTER_SANITIZE_NUMBER_INT); // ID do usuário que enviou a mensagem
+            $receptor = filter_var(decriptografar($_POST['receptor']), FILTER_SANITIZE_NUMBER_INT); // ID do usuário que recebe a mensagem
 
-                // Query corrigida (usando corretamente as constantes)
-                $sql = "INSERT INTO " . TB_MENSAGENS . " (" . MENSAGENS_ATTB_MSG . ", " . MENSAGENS_ATTB_DE . ", " . MENSAGENS_ATTB_PARA . ")  
+            // Query corrigida (usando corretamente as constantes)
+            $sql = "INSERT INTO " . TB_MENSAGENS . " (" . MENSAGENS_ATTB_MSG . ", " . MENSAGENS_ATTB_DE . ", " . MENSAGENS_ATTB_PARA . ")  
             VALUES (:msg, :de, :para)";
 
+            try {
 
                 $stmt = $pdo->prepare($sql);
                 $stmt->bindParam(':de', $emissor, PDO::PARAM_INT);
@@ -102,60 +102,33 @@ if (($_SERVER["REQUEST_METHOD"] === "POST" && validarLogin()) || $_SERVER["REQUE
             } else
                 //fazer login
                 if (isset($_POST["login"]) && isset($_POST["password"])) {
-                    try {
-                        $utilizador = $_POST["login"];
+                    $utilizador = $_POST["login"];
 
-                        $stmt = $pdo->prepare("SELECT * FROM " . TB_USER . " WHERE " . USER_ATTB_NOME . "=:utilizador OR " . USER_ATTB_EMAIL . "=:utilizador");
-                        $stmt->bindParam(':utilizador', $utilizador);
-                        $stmt->execute();
+                    $stmt = $pdo->prepare("SELECT * FROM " . TB_USER . " WHERE " . USER_ATTB_NOME . "=:utilizador OR " . USER_ATTB_EMAIL . "=:utilizador");
+                    $stmt->bindParam(':utilizador', $utilizador);
+                    $stmt->execute();
 
-                        if ($stmt->rowCount() > 0) {
-                            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($stmt->rowCount() > 0) {
+                        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                            if (password_verify($_POST["password"], $row[USER_ATTB_PASSWORD])) {
-
-
-                                // Query corrigida (usando corretamente as constantes)
-                                $sql = "INSERT INTO " . TB_SESSOES . " (" . SESSOES_ATTB_USER_ID . ", " . SESSOES_ATTB_TEMPO . ")  
-            VALUES (:SESSOES_ATTB_USER_ID, :SESSOES_ATTB_TEMPO)";
-                                $tempo = date('Y-m-d H:i:s', strtotime('+5 minutes'));
-
-                                $stmt = $pdo->prepare($sql);
-                                $stmt->bindParam(':SESSOES_ATTB_USER_ID', $row[USER_ATTB_ID], PDO::PARAM_INT);
-                                $stmt->bindParam(':SESSOES_ATTB_TEMPO', $tempo, PDO::PARAM_STR);
-                                // $stmt->execute();
-
-                                if ($stmt->execute()) {
-                                    $_SESSION['SUDOCHAT_SESSAO_ID'] = criptografar($row[USER_ATTB_ID]);
-                                    $_SESSION['USER_ATTB_NOME'] = criptografar($row[USER_ATTB_NOME]);
-                                    $_SESSION['USER_ATTB_EMAIL'] = criptografar($row[USER_ATTB_EMAIL]);
-                                    $_SESSION['USER_ATTB_FOTO'] = criptografar($row[USER_ATTB_FOTO]);
-                                    $_SESSION['SUDOCHAT_SESSAO'] = criptografar($pdo->lastInsertId());
-                                    // header("location: ../dashboard.php");
-                                    $resp["status"] = "success";
-                                    $resp["msg"] = "Login Efectuado com Successo";
-                                    $resp["url"] = "../";
-                                } else {
-                                    $resp["status"] = "error";
-                                    $resp["msg"] = "Erro ao registar a sessão";
-                                }
-                            } else {
-                                $resp["status"] = "error";
-                                $resp["msg"] = "Password errada";
-                            }
+                        if (password_verify($_POST["password"], $row[USER_ATTB_PASSWORD])) {
+                            $_SESSION['SUDOCHAT_SESSAO_ID'] = criptografar($row[USER_ATTB_ID]);
+                            // header("location: ../dashboard.php");
+                            $resp["status"] = "success";
+                            $resp["msg"] = "Login Efectuado com Successo";
+                            $resp["accao"] = "refresh";
                         } else {
                             $resp["status"] = "error";
-                            $resp["msg"] = "Utilizador Não consta na nossa base de dados";
-                            // echo "ere name errado";
+                            $resp["msg"] = "Password errada";
                         }
-                    } catch (PDOException $e) {
+                    } else {
                         $resp["status"] = "error";
-                        $resp["msg"] = "Houve um erro ao tentar fazer login: " . $e;
-                        // echo json_encode(["erro" => "Erro ao salvar mensagem: " . $e->getMessage()]);
-                    } finally {
-                        echo json_encode($resp);
-                        exit;
+                        $resp["msg"] = "Utilizador Não consta na nossa base de dados";
+                        // echo "ere name errado";
                     }
+
+                    echo json_encode($resp);
+                    exit();
                 } else if (isset($_POST["ultimoID_do"])) {
 
                     try {
@@ -188,19 +161,7 @@ if (($_SERVER["REQUEST_METHOD"] === "POST" && validarLogin()) || $_SERVER["REQUE
                             session_unset(); // Remove todas as variáveis da sessão
                             session_destroy(); // Destroi a sessão completamente
 
-                            if (isset($_SESSION['SUDOCHAT_SESSAO_ID']) && isset($_SESSION['SUDOCHAT_SESSAO'])) {
-                                $id = decriptografar($_SESSION['SUDOCHAT_SESSAO']);
-                                $user = decriptografar($_SESSION['SUDOCHAT_SESSAO_ID']);
-
-                                $stmt = $pdo->prepare("UPDATE " . TB_SESSOES . "  SET " . SESSOES_ATTB_ESTADO . " = false WHERE " . SESSOES_ATTB_ESTADO . "=true AND " . SESSOES_ATTB_ID . "=:id AND " . SESSOES_ATTB_USER_ID . "=:user");
-                                $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-                                $stmt->bindParam(':user', $id, PDO::PARAM_INT);
-
-                                $stmt->execute();
-                            }
-
                             $resp["status"] = "success";
-                            $resp["url"] = "/login";
                             $resp["msg"] = "Sessão terminada com sucesso";
                         } catch (Exception $e) {
                             $resp["status"] = "error";
@@ -226,41 +187,22 @@ if (($_SERVER["REQUEST_METHOD"] === "POST" && validarLogin()) || $_SERVER["REQUE
         } finally {
             exit;
         }
-    } else
-        //verificar se a pessoa esta logada
-        if (isset($_GET["isLoggedIn"])) {
-            try {
-                if (isset($_SESSION['SUDOCHAT_SESSAO_ID']) && isset($_SESSION['SUDOCHAT_SESSAO'])) {
-                    $id = decriptografar($_SESSION['SUDOCHAT_SESSAO']);
-                    $user = decriptografar($_SESSION['SUDOCHAT_SESSAO_ID']);
-                    $tempo = date('Y-m-d H:i:s', strtotime('+5 minutes'));
-
-                    $stmt = $pdo->prepare("UPDATE " . TB_SESSOES . "  SET " . SESSOES_ATTB_TEMPO . " = :tempo WHERE " . SESSOES_ATTB_ESTADO . "=true AND " . SESSOES_ATTB_ID . "=:id AND " . SESSOES_ATTB_USER_ID . "=:user");
-                    $stmt->bindParam(':tempo', $tempo, PDO::PARAM_STR);
-                    $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-                    $stmt->bindParam(':user', $user, PDO::PARAM_INT);
-                    if ($stmt->execute() && $stmt->rowCount() > 0) {
-                        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                        $resp['SUDOCHAT_SESSAO_ID'] = $user;
-                        $resp['SUDOCHAT_SESSAO_NOME'] = decriptografar($_SESSION['USER_ATTB_NOME']);
-                        $resp['SUDOCHAT_SESSAO_EMAIL'] = decriptografar($_SESSION['USER_ATTB_EMAIL']);
-                        $resp["status"] = "success";
-                    } else {
-                        // Destroi a sessão
-                        session_unset(); // Remove todas as variáveis da sessão
-                        session_destroy(); // Destroi a sessão completamente
-                    }
-                }
-                $resp["status"] = isset($resp["status"]) ? $resp["status"] : "error";
-            } catch (Exception $e) {
-                $resp["status"] = "error";
-                $resp["msg"] = $e;
-                // Destroi a sessão
-                session_unset(); // Remove todas as variáveis da sessão
-                session_destroy(); // Destroi a sessão completamente
-            } finally {
-                echo json_encode($resp);
-                exit;
+    } else if (isset($_GET["isLoggedIn"])) {
+        if (isset($_SESSION['SUDOCHAT_SESSAO_ID'])) {
+            $id = decriptografar($_SESSION['SUDOCHAT_SESSAO_ID']);
+            $stmt = $pdo->prepare("SELECT " . USER_ATTB_NOME . " as " . USER_ATTB_NOME . ", " . USER_ATTB_EMAIL . " as " . USER_ATTB_EMAIL . " FROM " . TB_USER . "  WHERE " . USER_ATTB_ID . " = :id");
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            if ($stmt->execute() && $stmt->rowCount() > 0) {
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $resp['SUDOCHAT_SESSAO_ID'] = $id;
+                $resp['SUDOCHAT_SESSAO_NOME'] = $row[USER_ATTB_NOME];
+                $resp['SUDOCHAT_SESSAO_EMAIL'] = $row[USER_ATTB_EMAIL];
+                $resp["status"] = "success";
             }
         }
+
+        $resp["status"] = isset($resp["status"]) ? $resp["status"] : "error";
+        echo json_encode($resp);
+        exit;
+    }
 }

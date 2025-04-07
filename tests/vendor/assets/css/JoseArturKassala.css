@@ -143,8 +143,6 @@ main {
       display: flex;
       flex-direction: column;
       gap: 0.2em;
-      max-height: calc(100vh - 11em);
-      overflow-y: auto; /* Adiciona barra de rolagem vertical quando necessário */
 
       .mensagem:hover {
         background-color: #edf0f6;

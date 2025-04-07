@@ -4,7 +4,6 @@ var LOGADO = 1;
 let ultimoId = -1;
 let LASTID = 0;
 let tocar = false;
-let page = 0;
 
 
 function abrirmenumsg() {
@@ -19,46 +18,23 @@ function abrirmenumsg() {
    }
 }
 
-function normalizarMeno() {
-   if (document.getElementById("conversasFoco")) {
-      document.getElementById("conversasFoco").classList.add("esconder");
-      document.getElementById("conversasDesfoco").classList.remove("esconder");
-
-      document.getElementById("gruposFoco").classList.add("esconder");
-      document.getElementById("gruposDesfoco").classList.remove("esconder");
-
-      document.getElementById("UtilizadoresFoco").classList.add("esconder");
-      document.getElementById("UtilizadoresDesfoco").classList.remove("esconder");
-   }
-}
-
-// Função para remover a classe 'activo' de todos os elementos com classe 'mensagem'
-function removerClasseActivo() {
-   const mensagens = document.querySelectorAll('.mensagem');
-   mensagens.forEach(mensagem => {
-      mensagem.classList.remove('activo');
-   });
-}
-
-function carregarListaUsuarios() {
+document.addEventListener("DOMContentLoaded", function () {
    if (container = document.querySelector(".baixo")) {
-      fetch("/vendor/backend/sudomake.php?usuarios")
-         .then(response => response.json())
-         .then(data => {
-            normalizarMeno();
-            document.getElementById("conversasDesfoco").classList.add("esconder");
-            document.getElementById("conversasFoco").classList.remove("esconder");
+      const mensagensContainer = document.getElementById("mensagens");
 
-            container.innerHTML = ""; // Limpa o conteúdo anterior
+      function carregarUsuarios() {
+         fetch("/vendor/backend/sudomake.php?usuarios")
+            .then(response => response.json())
+            .then(data => {
+               container.innerHTML = ""; // Limpa o conteúdo anterior
 
-            data.forEach(user => {
-               const nomeFormatado = formatarNome(user.USER_ATTB_NOME, 13);
+               data.forEach(user => {
+                  const nomeFormatado = formatarNome(user.USER_ATTB_NOME, 13);
 
-               const userElement = document.createElement("a");
-               userElement.href = user.USER_ATTB_ID;
-               userElement.id = "u_" + user.USER_ATTB_ID;
-               userElement.classList.add("mensagem");
-               userElement.innerHTML = `
+                  const userElement = document.createElement("a");
+                  userElement.href = user.USER_ATTB_ID;
+                  userElement.classList.add("mensagem");
+                  userElement.innerHTML = `
                         <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=740" alt="Avatar">
                         <div class="dois">
                             <div class="nome">${nomeFormatado}</div>
@@ -67,70 +43,60 @@ function carregarListaUsuarios() {
                         <span>${new Date().toLocaleTimeString()}</span>
                     `;
 
-               userElement.addEventListener("click", function (event) {
-                  event.preventDefault();
-                  JanelaDeMensagens(user.USER_ATTB_ID);
-                  removerClasseActivo();
-                  this.classList.add("activo"); // Usa 'this' para referenciar o <a> clicado
+                  userElement.addEventListener("click", function (event) {
+                     event.preventDefault();
+                     JanelaDeMensagens(user.USER_ATTB_ID);
+                  });
+
+                  container.appendChild(userElement);
                });
+            })
+            .catch(error => console.error("Erro ao buscar usuários:", error));
+      }
 
-               container.appendChild(userElement);
-            });
+      function JanelaDeMensagens(id) {
+         fetch("/vendor/backend/sudomake.php", {
+            method: "POST",
+            headers: {
+               "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: `id=${encodeURIComponent(id)}`
          })
-         .catch(error => console.error("Erro ao buscar usuários:", error));
+            .then(response => response.text())
+            .then(html => {
+               mensagensContainer.innerHTML = html;
+               RECEPTOR = id;
+               tocar = false;
+               ultimoId = -1;
+               LASTID = 0;
+               carregarMensagens(id);
+               LASTID = ultimoID_do(Number(id));
+
+               // alert("ID do formulário enviado:" + LASTID);
+               ultimoId = Number(LASTID);
+               tocar = true;
+
+               // alert(ultimoId);
+               // Adiciona um ouvinte de evento (event listener) para cada formulário na página
+               const forms = document.getElementsByTagName("form");
+               for (let i = 0; i < forms.length; i++) {
+                  // alert("ID do formulário enviado:"+forms[i].id);
+
+                  forms[i].addEventListener("submit", capturarIDdoFormulario);
+               }
+            })
+            .catch(error => console.error("Erro ao carregar mensagens:", error));
+      }
+
+
+      function formatarNome(nome, tamanho) {
+         return nome.length > tamanho ? nome.substring(0, tamanho) + "..." : nome;
+      }
+
+      carregarUsuarios();
    }
-}
+});
 
-carregarListaUsuarios();
-
-function JanelaDeMensagens(id) {
-   fetch("/vendor/backend/sudomake.php", {
-      method: "POST",
-      headers: {
-         "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: `id=${encodeURIComponent(id)}`
-   })
-      .then(response => response.text())
-      .then(html => {
-         document.getElementById("mensagens").innerHTML = html;
-         RECEPTOR = id;
-         tocar = false;
-         ultimoId = -1;
-         LASTID = 0;
-         carregarMensagens(id);
-         LASTID = ultimoID_do(Number(id));
-
-         // alert("ID do formulário enviado:" + LASTID);
-         ultimoId = Number(LASTID);
-         tocar = true;
-
-         // alert(ultimoId);
-         // Adiciona um ouvinte de evento (event listener) para cada formulário na página
-         const forms = document.getElementsByTagName("form");
-         for (let i = 0; i < forms.length; i++) {
-            // alert("ID do formulário enviado:"+forms[i].id);
-
-            forms[i].addEventListener("submit", capturarIDdoFormulario);
-         }
-      })
-      .catch(error => console.error("Erro ao carregar mensagens:", error));
-}
-
-function formatarNome(nome, tamanho) {
-   return nome.length > tamanho ? nome.substring(0, tamanho) + "..." : nome;
-}
-
-// carregarListaUsuarios();
-
-if (listarConversasBtn = document.getElementById("listarConversasBtn")) {
-
-   listarConversasBtn.addEventListener("click", function (event) {
-      event.preventDefault(); // Impede o comportamento padrão do link
-      carregarListaUsuarios();
-   });
-
-}
 
 function carregarMensagens(para) {
    if (document.getElementById("conteudo")) {
@@ -274,13 +240,13 @@ function verificarSessao() {
          }
       })
       .catch(error => {
-         mostrarAlert("Erro ao verificar sessão: " + error, "error", 10000);
+         showAlert("Erro ao verificar sessão: " + error, "error", 10000);
       });
 }
 
 // Executa a verificação imediatamente e depois a cada 5 segundos
 verificarSessao(); // Primeira execução
-setInterval(verificarSessao, 10000); // Repete a cada 5 segundos (5000ms)
+setInterval(verificarSessao, 5000); // Repete a cada 5 segundos (5000ms)
 
 
 // Função para terminar a sessão
@@ -458,7 +424,7 @@ alertDiv.id = "alertContainer";
 // Adiciona o elemento div ao body
 document.body.appendChild(alertDiv);
 
-function mostrarAlert(message, tipo = "error", duration = 3000) {
+function showAlert(message, tipo = "error", duration = 3000) {
    const container = document.getElementById("alertContainer");
 
    const alert = document.createElement("div");
@@ -515,7 +481,7 @@ function capturarIDdoFormulario(event) {
 
             if (data['status'] == "error")
                // alert(data['msg']);
-               mostrarAlert(data['msg']);
+               // showAlert(data['msg']);
             else {
                form.reset();
                // alertDiv.className = "alert alert-success alert-dismissible";
@@ -537,7 +503,7 @@ function capturarIDdoFormulario(event) {
             // Adiciona a nova linha à tabela
          })
          .catch((error) => {
-            mostrarAlert(error);
+            showAlert(error);
             // alert("Houve um erro ao processar a sua solicitação. Tente novamente mais tarde.");
             // alertDiv.innerHTML = error;
             // alertDiv.className = "alert alert-warning alert-dismissible";
