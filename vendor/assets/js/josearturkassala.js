@@ -319,39 +319,78 @@ function carregarMensagens(para) {
             mensagens.forEach(msg => {
                const div = document.createElement("div");
                div.classList.add("caixa");
-               if (msg.MENSAGENS_ATTB_DE == Number(LOGADO)) {
 
-                  div.innerHTML = `
+               // Função para renderizar os anexos
+               const renderizarAnexos = (anexos) => {
+                  if (!anexos || anexos.length === 0) return '';
 
-                        <div class="caixa">
-       <div class="emissor">
-        <div class="texto">
-          <div class="datahora" title='data e hora de envio'>${msg.MENSAGENS_ATTB_CRIADO_AOS}</div>
-          <div class="msg">
-          ${msg.MENSAGENS_ATTB_MSG}
-          </div>
-        </div>
-        </div>
-      </div>
-                    `;
-               } else {
-                  // alert(msg.MENSAGENS_ATTB_DE);
-                  // alert(LOGADO);
-                  div.innerHTML = `
-                        <div class="caixa">
-       <div class="receptor">
-        <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?t=st=1743555705~exp=1743559305~hmac=fb04ae28a8512fe8af76eb993e6dea68c3de7e38691ed699887af3a51666ca34&w=740" alt="">
-        <div class="texto">
-          <div class="datahora" title='data e hora de envio'><b>${tipoA == 2 ? msg.USER_ATTB_NOME : ''}</b></div>
-          <div class="msg">
-          ${msg.MENSAGENS_ATTB_MSG}
-          </div>
-          <div class="datahora" title='data e hora de envio'>${msg.MENSAGENS_ATTB_CRIADO_AOS}</div>
-        </div>
-        </div>
-      </div>
+                  let html = '<div class="anexos">';
+                  anexos.forEach(anexo => {
+                     // Adiciona o prefixo "vendor/" ao caminho do anexo
+                     const caminhoCompleto = `vendor/${anexo}`;
+
+                     // Verifica se o anexo é uma imagem (baseado na extensão)
+                     const extensao = anexo.split('.').pop().toLowerCase();
+                     const extensoesImagens = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+
+                     if (extensoesImagens.includes(extensao)) {
+                        // Se for uma imagem, exibe diretamente
+                        html += `
+                           <a href="vendor/${caminhoCompleto}" target="_blank">
+                              <img src="vendor/${caminhoCompleto}" alt="Anexo" class="anexo-imagem">
+                           </a>
                         `;
+                     } else {
+                        // Se não for uma imagem, exibe como um link
+                        html += `
+                           <a href="vendor/${caminhoCompleto}" target="_blank" class="anexo-link">
+                              Baixar arquivo: ${anexo.split('/').pop()}
+                           </a><br>
+                        `;
+                     }
+                  });
+                  html += '</div>';
+                  return html;
+               };
 
+               if (msg.MENSAGENS_ATTB_DE == Number(LOGADO)) {
+                  // Mensagem enviada pelo usuário logado (emissor)
+                  div.innerHTML = `
+                     <div class="caixa">
+                        <div class="emissor">
+                           <div class="texto">
+                              <div class="datahora" title='data e hora de envio'>
+                                 ${msg.MENSAGENS_ATTB_CRIADO_AOS}
+                              </div>
+                              <div class="msg">
+                                 ${msg.MENSAGENS_ATTB_MSG || ''}
+                              </div>
+                              ${renderizarAnexos(msg.ANEXOS)}
+                           </div>
+                        </div>
+                     </div>
+                  `;
+               } else {
+                  // Mensagem recebida de outro usuário (receptor)
+                  div.innerHTML = `
+                     <div class="caixa">
+                        <div class="receptor">
+                           <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?t=st=1743555705~exp=1743559305~hmac=fb04ae28a8512fe8af76eb993e6dea68c3de7e38691ed699887af3a51666ca34&w=740" alt="">
+                           <div class="texto">
+                              <div class="datahora" title='data e hora de envio'>
+                                 <b>${tipoA == 2 ? msg.USER_ATTB_NOME : ''}</b>
+                              </div>
+                              <div class="msg">
+                                 ${msg.MENSAGENS_ATTB_MSG || ''}
+                              </div>
+                              ${renderizarAnexos(msg.ANEXOS)}
+                              <div class="datahora" title='data e hora de envio'>
+                                 ${msg.MENSAGENS_ATTB_CRIADO_AOS}
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  `;
                }
 
                conteudo.appendChild(div);
@@ -362,11 +401,76 @@ function carregarMensagens(para) {
             });
          })
          .catch(error => {
-            mostrarAlert("Erro ao carregar mensagens: " + error)
-            console.error("Erro ao carregar mensagens:", error)
+            mostrarAlert("Erro ao carregar mensagens: " + error);
+            console.error("Erro ao carregar mensagens:", error);
          });
    }
 }
+
+// function carregarMensagens(para) {
+//    if (document.getElementById("conteudo")) {
+//       fetch("vendor/backend/sudomake.php", {
+//          method: "POST",
+//          headers: {
+//             "Content-Type": "application/x-www-form-urlencoded",
+//          },
+//          body: `para=${encodeURIComponent(para)}&ultimo_id=${encodeURIComponent(ultimoId)}&tipo=${tipoA}`
+//       })
+//          .then(response => response.json())
+//          .then(mensagens => {
+//             const conteudo = document.getElementById("conteudo");
+
+//             mensagens.forEach(msg => {
+//                const div = document.createElement("div");
+//                div.classList.add("caixa");
+//                if (msg.MENSAGENS_ATTB_DE == Number(LOGADO)) {
+
+//                   div.innerHTML = `
+
+//                         <div class="caixa">
+//        <div class="emissor">
+//         <div class="texto">
+//           <div class="datahora" title='data e hora de envio'>${msg.MENSAGENS_ATTB_CRIADO_AOS}</div>
+//           <div class="msg">
+//           ${msg.MENSAGENS_ATTB_MSG}
+//           </div>
+//         </div>
+//         </div>
+//       </div>
+//                     `;
+//                } else {
+//                   // alert(msg.MENSAGENS_ATTB_DE);
+//                   // alert(LOGADO);
+//                   div.innerHTML = `
+//                         <div class="caixa">
+//        <div class="receptor">
+//         <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?t=st=1743555705~exp=1743559305~hmac=fb04ae28a8512fe8af76eb993e6dea68c3de7e38691ed699887af3a51666ca34&w=740" alt="">
+//         <div class="texto">
+//           <div class="datahora" title='data e hora de envio'><b>${tipoA == 2 ? msg.USER_ATTB_NOME : ''}</b></div>
+//           <div class="msg">
+//           ${msg.MENSAGENS_ATTB_MSG}
+//           </div>
+//           <div class="datahora" title='data e hora de envio'>${msg.MENSAGENS_ATTB_CRIADO_AOS}</div>
+//         </div>
+//         </div>
+//       </div>
+//                         `;
+
+//                }
+
+//                conteudo.appendChild(div);
+
+//                ultimoId = Number(msg.MENSAGENS_ATTB_ID); // Atualiza último ID
+
+//                document.getElementById("conteudo").scrollTop = conteudo.scrollHeight;
+//             });
+//          })
+//          .catch(error => {
+//             mostrarAlert("Erro ao carregar mensagens: " + error)
+//             console.error("Erro ao carregar mensagens:", error)
+//          });
+//    }
+// }
 
 // Função síncrona para obter o último ID de mensagem de um usuário
 function ultimoID_do(para) {

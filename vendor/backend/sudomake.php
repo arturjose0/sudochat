@@ -3,40 +3,65 @@ require_once 'JoseArturKassala.php'; // Arquivo com a conexão ao banco de dados
 
 if (($_SERVER["REQUEST_METHOD"] === "POST" && validarLogin($pdo)) || $_SERVER["REQUEST_METHOD"] === "POST" && !validarLogin($pdo) && isset($_POST['login']) && isset($_POST['password'])) {
 
-    //pegar todas as mensagens enviadas e recebidas
+    // Pegar todas as mensagens enviadas e recebidas
     if (isset($_POST['para']) && isset($_POST['ultimo_id']) && isset($_POST['tipo'])) {
-
         try {
+
             $de = (int) decriptografar($_SESSION['SUDOCHAT_SESSAO_ID']);
             $para = (int) $_POST['para'];
             $ultimo_id = (int) $_POST['ultimo_id'];
+            $tipo = $_POST['tipo'];
 
-            // Busca apenas mensagens novas
-            $sql = "SELECT " . MENSAGENS_ATTB_ID . " as MENSAGENS_ATTB_ID, " . MENSAGENS_ATTB_MSG . " AS MENSAGENS_ATTB_MSG, " . MENSAGENS_ATTB_DE . " as MENSAGENS_ATTB_DE, " . MENSAGENS_ATTB_CRIADO_AOS . " as MENSAGENS_ATTB_CRIADO_AOS FROM " . TB_MENSAGENS . " 
-            WHERE ((" . MENSAGENS_ATTB_DE . " = :de AND " . MENSAGENS_ATTB_PARA . " = :para) OR (" . MENSAGENS_ATTB_DE . " = :para AND " . MENSAGENS_ATTB_PARA . " = :de) 
-            ) AND " . MENSAGENS_ATTB_ID . " > :ultimo_id 
-            ORDER BY " . MENSAGENS_ATTB_ID . " ASC";
+            // Query para mensagens individuais
+            $sql = "SELECT 
+                    " . MENSAGENS_ATTB_ID . " as MENSAGENS_ATTB_ID, 
+                    " . MENSAGENS_ATTB_MSG . " AS MENSAGENS_ATTB_MSG, 
+                    " . MENSAGENS_ATTB_DE . " as MENSAGENS_ATTB_DE, 
+                    " . MENSAGENS_ATTB_CRIADO_AOS . " as MENSAGENS_ATTB_CRIADO_AOS 
+                FROM " . TB_MENSAGENS . " 
+                WHERE ((" . MENSAGENS_ATTB_DE . " = :de AND " . MENSAGENS_ATTB_PARA . " = :para) 
+                    OR (" . MENSAGENS_ATTB_DE . " = :para AND " . MENSAGENS_ATTB_PARA . " = :de)) 
+                    AND " . MENSAGENS_ATTB_ID . " > :ultimo_id 
+                ORDER BY " . MENSAGENS_ATTB_ID . " ASC";
 
-            if ($_POST['tipo'] == 2) {
-                $sql = "SELECT tm." . MENSAGENS_USER_GRUPO_ATTB_ID . " as MENSAGENS_ATTB_ID, tm." . MENSAGENS_USER_GRUPO_ATTB_MSG . " AS MENSAGENS_ATTB_MSG, tm." . MENSAGENS_USER_GRUPO_ATTB_MEMBRO . " as MENSAGENS_ATTB_DE, tm." . MENSAGENS_USER_GRUPO_ATTB_CRIADO_AOS . " as MENSAGENS_ATTB_CRIADO_AOS, u." . USER_ATTB_NOME . " as USER_ATTB_NOME FROM " . TB_MENSAGENS_USER_GRUPO . " tm LEFT JOIN " . TB_USER . " u ON u.id=tm." . MENSAGENS_USER_GRUPO_ATTB_MEMBRO . " WHERE tm." . MENSAGENS_USER_GRUPO_ATTB_GRUPO . "=:para AND tm." . MENSAGENS_USER_GRUPO_ATTB_ID . ">:ultimo_id";
+            // Query para mensagens de grupo
+            if ($tipo == 2) {
+                $sql = "SELECT 
+                        tm." . MENSAGENS_USER_GRUPO_ATTB_ID . " as MENSAGENS_ATTB_ID, 
+                        tm." . MENSAGENS_USER_GRUPO_ATTB_MSG . " AS MENSAGENS_ATTB_MSG, 
+                        tm." . MENSAGENS_USER_GRUPO_ATTB_MEMBRO . " as MENSAGENS_ATTB_DE, 
+                        tm." . MENSAGENS_USER_GRUPO_ATTB_CRIADO_AOS . " as MENSAGENS_ATTB_CRIADO_AOS, 
+                        u." . USER_ATTB_NOME . " as USER_ATTB_NOME 
+                    FROM " . TB_MENSAGENS_USER_GRUPO . " tm 
+                    LEFT JOIN " . TB_USER . " u 
+                        ON u.id = tm." . MENSAGENS_USER_GRUPO_ATTB_MEMBRO . " 
+                    WHERE tm." . MENSAGENS_USER_GRUPO_ATTB_GRUPO . " = :para 
+                        AND tm." . MENSAGENS_USER_GRUPO_ATTB_ID . " > :ultimo_id
+                    ORDER BY tm." . MENSAGENS_USER_GRUPO_ATTB_ID . " ASC";
             }
 
             $stmt = $pdo->prepare($sql);
-            if ($_POST['tipo'] != 2)
+            if ($tipo != 2) {
                 $stmt->bindParam(':de', $de, PDO::PARAM_INT);
-
+            }
             $stmt->bindParam(':para', $para, PDO::PARAM_INT);
             $stmt->bindParam(':ultimo_id', $ultimo_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $mensagens = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Descriptografar as mensagens
+            // Processa as mensagens
             foreach ($mensagens as &$mensagem) {
-                // Descriptografando a mensagem
-                $mensagem['MENSAGENS_ATTB_MSG'] = htmlspecialchars(decriptografar($mensagem[MENSAGENS_ATTB_MSG]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                // Decodifica o JSON
+                $mensagemData = json_decode($mensagem['MENSAGENS_ATTB_MSG'], true);
 
-                // $mensagem['MENSAGENS_ATTB_MSG'] = exibirCodigoSeguro(decriptografar($mensagem[MENSAGENS_ATTB_MSG]));
+                // Descriptografa o texto, se existir
+                $mensagem['MENSAGENS_ATTB_MSG'] = !empty($mensagemData['texto'])
+                    ? htmlspecialchars(decriptografar($mensagemData['texto']), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+                    : null;
+
+                // Adiciona os anexos
+                $mensagem['ANEXOS'] = $mensagemData['anexos'] ?? [];
             }
 
             header('Content-Type: application/json');
@@ -46,204 +71,432 @@ if (($_SERVER["REQUEST_METHOD"] === "POST" && validarLogin($pdo)) || $_SERVER["R
         } finally {
             exit;
         }
-    } else
+    }
+    //pegar todas as mensagens enviadas e recebidas
+    // if (isset($_POST['para']) && isset($_POST['ultimo_id']) && isset($_POST['tipo'])) {
 
-        // enviar mensagem
-        if (isset($_POST['mensagem']) && isset($_POST['receptor']) && isset($_FILES['anexos']) && isset($_POST['tipo'])) {
-            try {
+    //     try {
+    //         $de = (int) decriptografar($_SESSION['SUDOCHAT_SESSAO_ID']);
+    //         $para = (int) $_POST['para'];
+    //         $ultimo_id = (int) $_POST['ultimo_id'];
 
-                if (empty($_FILES['anexos']['name'][0]) && empty($_POST['mensagem'])) {
-                    $resp["status"] = "error";
-                    $resp["msg"] = "A mensagem não pode ser vazia";
-                    echo json_encode($resp);
+    //         // Busca apenas mensagens novas
+    //         $sql = "SELECT " . MENSAGENS_ATTB_ID . " as MENSAGENS_ATTB_ID, " . MENSAGENS_ATTB_MSG . " AS MENSAGENS_ATTB_MSG, " . MENSAGENS_ATTB_DE . " as MENSAGENS_ATTB_DE, " . MENSAGENS_ATTB_CRIADO_AOS . " as MENSAGENS_ATTB_CRIADO_AOS FROM " . TB_MENSAGENS . " 
+    //         WHERE ((" . MENSAGENS_ATTB_DE . " = :de AND " . MENSAGENS_ATTB_PARA . " = :para) OR (" . MENSAGENS_ATTB_DE . " = :para AND " . MENSAGENS_ATTB_PARA . " = :de) 
+    //         ) AND " . MENSAGENS_ATTB_ID . " > :ultimo_id 
+    //         ORDER BY " . MENSAGENS_ATTB_ID . " ASC";
 
-                    exit;
+    //         if ($_POST['tipo'] == 2) {
+    //             $sql = "SELECT tm." . MENSAGENS_USER_GRUPO_ATTB_ID . " as MENSAGENS_ATTB_ID, tm." . MENSAGENS_USER_GRUPO_ATTB_MSG . " AS MENSAGENS_ATTB_MSG, tm." . MENSAGENS_USER_GRUPO_ATTB_MEMBRO . " as MENSAGENS_ATTB_DE, tm." . MENSAGENS_USER_GRUPO_ATTB_CRIADO_AOS . " as MENSAGENS_ATTB_CRIADO_AOS, u." . USER_ATTB_NOME . " as USER_ATTB_NOME FROM " . TB_MENSAGENS_USER_GRUPO . " tm LEFT JOIN " . TB_USER . " u ON u.id=tm." . MENSAGENS_USER_GRUPO_ATTB_MEMBRO . " WHERE tm." . MENSAGENS_USER_GRUPO_ATTB_GRUPO . "=:para AND tm." . MENSAGENS_USER_GRUPO_ATTB_ID . ">:ultimo_id";
+    //         }
+
+    //         $stmt = $pdo->prepare($sql);
+    //         if ($_POST['tipo'] != 2)
+    //             $stmt->bindParam(':de', $de, PDO::PARAM_INT);
+
+    //         $stmt->bindParam(':para', $para, PDO::PARAM_INT);
+    //         $stmt->bindParam(':ultimo_id', $ultimo_id, PDO::PARAM_INT);
+    //         $stmt->execute();
+
+    //         $mensagens = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    //         // Descriptografar as mensagens
+    //         foreach ($mensagens as &$mensagem) {
+    //             // Descriptografando a mensagem
+    //             $mensagem['MENSAGENS_ATTB_MSG'] = htmlspecialchars(decriptografar($mensagem[MENSAGENS_ATTB_MSG]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+    //             // $mensagem['MENSAGENS_ATTB_MSG'] = exibirCodigoSeguro(decriptografar($mensagem[MENSAGENS_ATTB_MSG]));
+    //         }
+
+    //         header('Content-Type: application/json');
+    //         echo json_encode($mensagens);
+    //     } catch (PDOException $e) {
+    //         echo json_encode(["erro" => "Erro ao buscar mensagens: " . $e->getMessage()]);
+    //     } finally {
+    //         exit;
+    //     }
+    // }
+    // Enviar mensagem
+    else
+if (isset($_POST['mensagem']) && isset($_POST['receptor']) && isset($_POST['tipo'])) {
+        try {
+
+            // Verifica se há mensagem ou anexos
+            $mensagemTexto = trim($_POST['mensagem']);
+            $temAnexos = !empty($_FILES['anexos']['name'][0]);
+            if (empty($mensagemTexto) && !$temAnexos) {
+                $resp["status"] = "error";
+                $resp["msg"] = "A mensagem ou anexos não podem estar vazios";
+                echo json_encode($resp);
+                exit;
+            }
+
+            // Dados do emissor e receptor
+            $emissor = filter_var(decriptografar($_SESSION["SUDOCHAT_SESSAO_ID"]), FILTER_SANITIZE_NUMBER_INT);
+            $receptor = filter_var(decriptografar($_POST['receptor']), FILTER_SANITIZE_NUMBER_INT);
+            $tipo = $_POST['tipo'];
+
+            // Processa os anexos, se houver
+            $anexosPaths = [];
+            if ($temAnexos) {
+                // Diretório onde os arquivos serão salvos
+                $uploadDir = "../uploads/";
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true); // Cria o diretório se não existir
                 }
 
-                $mensagem = criptografar(trim($_POST['mensagem'])); // Remover espaços em branco extras
-                $anexos = trim($_POST['mensagem']); // Remover espaços em branco extras
-                $emissor = filter_var(decriptografar($_SESSION["SUDOCHAT_SESSAO_ID"]), FILTER_SANITIZE_NUMBER_INT); // ID do usuário que enviou a mensagem
-                $receptor = filter_var(decriptografar($_POST['receptor']), FILTER_SANITIZE_NUMBER_INT); // ID do usuário que recebe a mensagem
+                $files = $_FILES['anexos'];
 
-                // Query corrigida (usando corretamente as constantes)
+                // Loop para processar cada arquivo
+                for ($i = 0; $i < count($files['name']); $i++) {
+                    if ($files['error'][$i] === UPLOAD_ERR_OK) {
+                        // Gera um nome único para o arquivo
+                        $fileName = uniqid() . "_" . basename($files['name'][$i]);
+                        $filePath = $uploadDir . $fileName;
+
+                        // Move o arquivo para o diretório
+                        if (move_uploaded_file($files['tmp_name'][$i], $filePath)) {
+                            $anexosPaths[] = $filePath;
+                        } else {
+                            throw new Exception("Erro ao mover o arquivo: " . $files['name'][$i]);
+                        }
+                    } else {
+                        throw new Exception("Erro no upload do arquivo: " . $files['error'][$i]);
+                    }
+                }
+            }
+
+            // Cria o objeto JSON com a mensagem e os anexos
+            $mensagemData = [
+                "texto" => !empty($mensagemTexto) ? criptografar($mensagemTexto) : null,
+                "anexos" => $anexosPaths
+            ];
+            $mensagemJson = json_encode($mensagemData);
+
+            // Insere a mensagem
+            if ($tipo == 2) {
+                $sql = "INSERT INTO " . TB_MENSAGENS_USER_GRUPO . " (" . MENSAGENS_USER_GRUPO_ATTB_MSG . ", " . MENSAGENS_USER_GRUPO_ATTB_MEMBRO . ", " . MENSAGENS_USER_GRUPO_ATTB_GRUPO . ")
+                    VALUES (:msg, :de, :para)";
+            } else {
                 $sql = "INSERT INTO " . TB_MENSAGENS . " (" . MENSAGENS_ATTB_MSG . ", " . MENSAGENS_ATTB_DE . ", " . MENSAGENS_ATTB_PARA . ")  
-            VALUES (:msg, :de, :para)";
+                    VALUES (:msg, :de, :para)";
+            }
 
-                if ($_POST['tipo'] == 2) {
-                    $sql = "INSERT INTO " . TB_MENSAGENS_USER_GRUPO . " (" . MENSAGENS_USER_GRUPO_ATTB_MSG . ", " . MENSAGENS_USER_GRUPO_ATTB_MEMBRO . ", " . MENSAGENS_USER_GRUPO_ATTB_GRUPO . ")"
-                        . "VALUES (:msg, :de, :para)";
-                }
-                // Query corrigida (usando corretamente as constantes)
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':msg', $mensagemJson, PDO::PARAM_STR);
+            $stmt->bindParam(':de', $emissor, PDO::PARAM_INT);
+            $stmt->bindParam(':para', $receptor, PDO::PARAM_INT);
 
-                $stmt = $pdo->prepare($sql);
-                $stmt->bindParam(':de', $emissor, PDO::PARAM_INT);
-                $stmt->bindParam(':para', $receptor, PDO::PARAM_INT);
-                $stmt->bindParam(':msg', $mensagem, PDO::PARAM_STR);
-                // $stmt->execute();
+            if ($stmt->execute()) {
+                $resp["status"] = "success";
+                $resp["msg"] = "Mensagem e/ou anexos enviados com sucesso";
+            } else {
+                throw new PDOException("Erro ao salvar mensagem");
+            }
+        } catch (Exception $e) {
+            $resp["status"] = "error";
+            $resp["msg"] = "Erro ao enviar: " . $e->getMessage();
+        } finally {
+            echo json_encode($resp);
+            exit;
+        }
+    }
+    // if (isset($_POST['mensagem']) && isset($_POST['receptor']) && isset($_POST['tipo'])) {
+    //         try {
 
-                if ($stmt->execute()) {
-                    $resp["status"] = "success";
-                    $resp["msg"] = "Registado com Sucesso";
+    //             // Verifica se há mensagem ou anexos
+    //             $mensagemTexto = trim($_POST['mensagem']);
+    //             $temAnexos = !empty($_FILES['anexos']['name'][0]);
+    //             if (empty($mensagemTexto) && !$temAnexos) {
+    //                 $resp["status"] = "error";
+    //                 $resp["msg"] = "A mensagem ou anexos não podem estar vazios";
+    //                 echo json_encode($resp);
+    //                 exit;
+    //             }
+
+    //             // Dados do emissor e receptor
+    //             $emissor = filter_var(decriptografar($_SESSION["SUDOCHAT_SESSAO_ID"]), FILTER_SANITIZE_NUMBER_INT);
+    //             $receptor = filter_var(decriptografar($_POST['receptor']), FILTER_SANITIZE_NUMBER_INT);
+    //             $tipo = $_POST['tipo'];
+
+    //             // Criptografa a mensagem, se existir
+    //             $mensagemCriptografada = !empty($mensagemTexto) ? criptografar($mensagemTexto) : null;
+
+    //             // Insere a mensagem (se houver texto)
+    //             $mensagemId = null;
+    //             if (!empty($mensagemTexto)) {
+    //                 // Define a query com base no tipo (individual ou grupo)
+    //                 if ($tipo == 2) {
+    //                     $sql = "INSERT INTO " . TB_MENSAGENS_USER_GRUPO . " (" . MENSAGENS_USER_GRUPO_ATTB_MSG . ", " . MENSAGENS_USER_GRUPO_ATTB_MEMBRO . ", " . MENSAGENS_USER_GRUPO_ATTB_GRUPO . ")
+    //                         VALUES (:msg, :de, :para)";
+    //                 } else {
+    //                     $sql = "INSERT INTO " . TB_MENSAGENS . " (" . MENSAGENS_ATTB_MSG . ", " . MENSAGENS_ATTB_DE . ", " . MENSAGENS_ATTB_PARA . ")  
+    //                         VALUES (:msg, :de, :para)";
+    //                 }
+
+    //                 $stmt = $pdo->prepare($sql);
+    //                 $stmt->bindParam(':msg', $mensagemCriptografada, PDO::PARAM_STR);
+    //                 $stmt->bindParam(':de', $emissor, PDO::PARAM_INT);
+    //                 $stmt->bindParam(':para', $receptor, PDO::PARAM_INT);
+
+    //                 if ($stmt->execute()) {
+    //                     $mensagemId = $pdo->lastInsertId(); // Obtém o ID da mensagem inserida
+    //                 } else {
+    //                     throw new PDOException("Erro ao salvar mensagem");
+    //                 }
+    //             }
+
+    //             // Processa os anexos, se houver
+    //             if ($temAnexos) {
+    //                 // Diretório onde os arquivos serão salvos
+    //                 $uploadDir = "../uploads/";
+    //                 if (!is_dir($uploadDir)) {
+    //                     mkdir($uploadDir, 0755, true); // Cria o diretório se não existir
+    //                 }
+
+    //                 $anexosPaths = [];
+    //                 $files = $_FILES['anexos'];
+
+    //                 // Loop para processar cada arquivo
+    //                 for ($i = 0; $i < count($files['name']); $i++) {
+    //                     if ($files['error'][$i] === UPLOAD_ERR_OK) {
+    //                         // Gera um nome único para o arquivo
+    //                         $fileName = uniqid() . "_" . basename($files['name'][$i]);
+    //                         $filePath = $uploadDir . $fileName;
+
+    //                         // Move o arquivo para o diretório
+    //                         if (move_uploaded_file($files['tmp_name'][$i], $filePath)) {
+    //                             $anexosPaths[] = $filePath;
+    //                         } else {
+    //                             throw new Exception("Erro ao mover o arquivo: " . $files['name'][$i]);
+    //                         }
+    //                     } else {
+    //                         throw new Exception("Erro no upload do arquivo: " . $files['error'][$i]);
+    //                     }
+    //                 }
+
+    //                 // Insere os caminhos dos anexos no banco de dados
+    //                 foreach ($anexosPaths as $path) {
+    //                     $sqlAnexos = "INSERT INTO " . TB_MENSAGENS_ARQUIVOS . " (" . MENSAGENS_ARQUIVOS_ATTB_ANEXOS . ", " . MENSAGENS_ARQUIVOS_ATTB_DE . ", " . MENSAGENS_ARQUIVOS_ATTB_PARA . ")
+    //                               VALUES (:anexo, :de, :para)";
+    //                     $stmtAnexos = $pdo->prepare($sqlAnexos);
+    //                     $stmtAnexos->bindParam(':anexo', $path, PDO::PARAM_STR);
+    //                     $stmtAnexos->bindParam(':de', $emissor, PDO::PARAM_INT);
+    //                     $stmtAnexos->bindParam(':para', $receptor, PDO::PARAM_INT);
+
+    //                     if (!$stmtAnexos->execute()) {
+    //                         throw new PDOException("Erro ao salvar o caminho do anexo");
+    //                     }
+    //                 }
+    //             }
+
+    //             // Resposta de sucesso
+    //             $resp["status"] = "success";
+    //             $resp["msg"] = "Mensagem e/ou anexos enviados com sucesso";
+    //         } catch (Exception $e) {
+    //             $resp["status"] = "error";
+    //             $resp["msg"] = "Erro ao enviar: " . $e->getMessage();
+    //         } finally {
+    //             echo json_encode($resp);
+    //             exit;
+    //         }
+    //     }
+    // if (isset($_POST['mensagem']) && isset($_POST['receptor']) && isset($_FILES['anexos']) && isset($_POST['tipo'])) {
+    //     try {
+
+    //         if (empty($_FILES['anexos']['name'][0]) && empty($_POST['mensagem'])) {
+    //             $resp["status"] = "error";
+    //             $resp["msg"] = "A mensagem não pode ser vazia";
+    //             echo json_encode($resp);
+
+    //             exit;
+    //         }
+
+    //         $mensagem = criptografar(trim($_POST['mensagem'])); // Remover espaços em branco extras
+    //         $anexos = trim($_POST['mensagem']); // Remover espaços em branco extras
+    //         $emissor = filter_var(decriptografar($_SESSION["SUDOCHAT_SESSAO_ID"]), FILTER_SANITIZE_NUMBER_INT); // ID do usuário que enviou a mensagem
+    //         $receptor = filter_var(decriptografar($_POST['receptor']), FILTER_SANITIZE_NUMBER_INT); // ID do usuário que recebe a mensagem
+
+    //         // Query corrigida (usando corretamente as constantes)
+    //         $sql = "INSERT INTO " . TB_MENSAGENS . " (" . MENSAGENS_ATTB_MSG . ", " . MENSAGENS_ATTB_DE . ", " . MENSAGENS_ATTB_PARA . ")  
+    //     VALUES (:msg, :de, :para)";
+
+    //         if ($_POST['tipo'] == 2) {
+    //             $sql = "INSERT INTO " . TB_MENSAGENS_USER_GRUPO . " (" . MENSAGENS_USER_GRUPO_ATTB_MSG . ", " . MENSAGENS_USER_GRUPO_ATTB_MEMBRO . ", " . MENSAGENS_USER_GRUPO_ATTB_GRUPO . ")"
+    //                 . "VALUES (:msg, :de, :para)";
+    //         }
+    //         // Query corrigida (usando corretamente as constantes)
+
+    //         $stmt = $pdo->prepare($sql);
+    //         $stmt->bindParam(':de', $emissor, PDO::PARAM_INT);
+    //         $stmt->bindParam(':para', $receptor, PDO::PARAM_INT);
+    //         $stmt->bindParam(':msg', $mensagem, PDO::PARAM_STR);
+    //         // $stmt->execute();
+
+    //         if ($stmt->execute()) {
+    //             $resp["status"] = "success";
+    //             $resp["msg"] = "Registado com Sucesso";
+    //         } else {
+    //             $resp["status"] = "error";
+    //             $resp["msg"] = "Mensagem não enviada";
+    //         }
+    //     } catch (PDOException $e) {
+    //         $resp["status"] = "error";
+    //         $resp["msg"] = "Mensagem não enviada";
+    //         // echo json_encode(["erro" => "Erro ao salvar mensagem: " . $e->getMessage()]);
+    //     } finally {
+    //         echo json_encode($resp);
+    //         exit;
+    //     }
+    // } 
+    //abrir a janela de mensagens
+    else
+            if (isset($_POST['id']) && ctype_digit($_POST['id']) && isset($_POST['tipo']) && ctype_digit($_POST['tipo'])) {
+        try {
+            define("ID", $_POST['id']);
+            $sql = "SELECT u." . USER_ATTB_NOME . " as USER_ATTB_NOME FROM " . TB_USER . " u where u." . USER_ATTB_ID . "=" . ID;
+            // if($_POST['tipo']==2){
+
+            // }
+            // include_once '../backend/JoseArturKassala.php'; // Arquivo de conexão
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute();
+            $dados = $stmt->fetch(PDO::FETCH_ASSOC);
+            $ATTB_NOME = $dados["USER_ATTB_NOME"];
+
+            $ATTB_ID = criptografar(ID);
+            require_once '../pages/mensagem.php'; // Arquivo da mensagem
+        } catch (Exception $e) {
+            echo "Houve um erro";
+        } finally {
+
+            exit;
+        }
+    } else
+        //fazer login
+        if (isset($_POST["login"]) && isset($_POST["password"])) {
+            try {
+                $utilizador = $_POST["login"];
+
+                $stmt = $pdo->prepare("SELECT * FROM " . TB_USER . " WHERE " . USER_ATTB_NOME . "=:utilizador OR " . USER_ATTB_EMAIL . "=:utilizador");
+                $stmt->bindParam(':utilizador', $utilizador);
+                $stmt->execute();
+
+                if ($stmt->rowCount() > 0) {
+                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                    if (password_verify($_POST["password"], $row[USER_ATTB_PASSWORD])) {
+                        $userID = $row[USER_ATTB_ID];
+                        $stmt = $pdo->prepare("UPDATE " . TB_SESSOES . "  SET " . SESSOES_ATTB_ESTADO . " = 0 WHERE " . SESSOES_ATTB_ESTADO . "=1 AND " . SESSOES_ATTB_USER_ID . "=:user");
+                        $stmt->bindParam(':user', $row[USER_ATTB_ID], PDO::PARAM_INT);
+
+                        $stmt->execute();
+
+                        // Query corrigida (usando corretamente as constantes)
+                        $sql = "INSERT INTO " . TB_SESSOES . " (" . SESSOES_ATTB_USER_ID . ", " . SESSOES_ATTB_TEMPO . ")  
+            VALUES (:SESSOES_ATTB_USER_ID, :SESSOES_ATTB_TEMPO)";
+                        // Chama a função dataActual
+                        $dataAtual = dataActual($pdo);
+                        $tempo = date('Y-m-d H:i:s', strtotime($dataAtual . ' +5 minutes'));
+
+                        $stmt = $pdo->prepare($sql);
+                        $stmt->bindParam(':SESSOES_ATTB_USER_ID', $row[USER_ATTB_ID], PDO::PARAM_INT);
+                        $stmt->bindParam(':SESSOES_ATTB_TEMPO', $tempo, PDO::PARAM_STR);
+                        // $stmt->execute();
+
+                        if ($stmt->execute()) {
+                            $_SESSION['SUDOCHAT_SESSAO_ID'] = criptografar($row[USER_ATTB_ID]);
+                            $_SESSION['USER_ATTB_NOME'] = criptografar($row[USER_ATTB_NOME]);
+                            $_SESSION['USER_ATTB_EMAIL'] = criptografar($row[USER_ATTB_EMAIL]);
+                            $_SESSION['USER_ATTB_FOTO'] = criptografar($row[USER_ATTB_FOTO]);
+                            $_SESSION['SUDOCHAT_SESSAO'] = criptografar($pdo->lastInsertId());
+                            // header("location: ../dashboard.php");
+                            $resp["status"] = "success";
+                            $resp["msg"] = "Login Efectuado com Successo";
+                            $resp["url"] = "../";
+                        } else {
+                            $resp["status"] = "error";
+                            $resp["msg"] = "Erro ao registar a sessão";
+                        }
+                    } else {
+                        $resp["status"] = "error";
+                        $resp["msg"] = "Password errada";
+                    }
                 } else {
                     $resp["status"] = "error";
-                    $resp["msg"] = "Mensagem não enviada";
+                    $resp["msg"] = "Utilizador Não consta na nossa base de dados";
+                    // echo "ere name errado";
                 }
             } catch (PDOException $e) {
                 $resp["status"] = "error";
-                $resp["msg"] = "Mensagem não enviada";
+                $resp["msg"] = "Houve um erro ao tentar fazer login: " . $e;
                 // echo json_encode(["erro" => "Erro ao salvar mensagem: " . $e->getMessage()]);
             } finally {
                 echo json_encode($resp);
                 exit;
             }
+        }
+        //pegar o id da ultima mensagem
+        else if (isset($_POST["ultimoID_do"]) && isset($_POST["tipo"])) {
+
+            try {
+                $ultimoID = $_POST["ultimoID_do"];
+                $sql = "SELECT tm." . MENSAGENS_ATTB_ID . " as MENSAGENS_ATTB_ID FROM " . TB_MENSAGENS . " tm WHERE tm." . MENSAGENS_ATTB_DE . " =:id_mensagem OR tm." . MENSAGENS_ATTB_PARA . " =:id_mensagem ORDER BY tm." . MENSAGENS_ATTB_ID . " DESC LIMIT 1";
+
+                if ($_POST["tipo"] == 2) {
+                    $sql = "SELECT tm." . MENSAGENS_USER_GRUPO_ATTB_ID . " as MENSAGENS_ATTB_ID FROM " . TB_MENSAGENS_USER_GRUPO . " tm WHERE tm." . MENSAGENS_USER_GRUPO_ATTB_GRUPO . "=:id_mensagem ORDER BY tm." . MENSAGENS_USER_GRUPO_ATTB_ID . " DESC LIMIT 1";
+                }
+
+                $stmt = $pdo->prepare($sql);
+                $stmt->bindParam(':id_mensagem', $ultimoID, PDO::PARAM_INT);
+                if ($stmt->execute()) {
+                    if ($stmt->rowCount() > 0) {
+                        $resp["status"] = "success";
+                        $resp["ultimoID"] = $stmt->fetch(PDO::FETCH_ASSOC)["MENSAGENS_ATTB_ID"];
+                    } else {
+                        $resp["status"] = "error";
+                    }
+                } else {
+                    $resp["status"] = "success";
+                    $resp["ultimoID"] = 0;
+                }
+            } catch (PDOException $e) {
+                $resp["status"] = "error";
+                $resp["msg"] = "Erro ao buscar o último ID: " . $e->getMessage();
+            } finally {
+                echo json_encode($resp);
+                exit;
+            }
         } else
-            //abrir a janela de mensagens
-            if (isset($_POST['id']) && ctype_digit($_POST['id']) && isset($_POST['tipo']) && ctype_digit($_POST['tipo'])) {
+            // Lógica para terminar sessão
+            if (isset($_POST["terminarSessao"])) {
                 try {
-                    define("ID", $_POST['id']);
-                    $sql = "SELECT u." . USER_ATTB_NOME . " as USER_ATTB_NOME FROM " . TB_USER . " u where u." . USER_ATTB_ID . "=" . ID;
-                    // if($_POST['tipo']==2){
 
-                    // }
-                    // include_once '../backend/JoseArturKassala.php'; // Arquivo de conexão
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->execute();
-                    $dados = $stmt->fetch(PDO::FETCH_ASSOC);
-                    $ATTB_NOME = $dados["USER_ATTB_NOME"];
+                    if (isset($_SESSION['SUDOCHAT_SESSAO_ID']) && isset($_SESSION['SUDOCHAT_SESSAO'])) {
+                        $id = decriptografar($_SESSION['SUDOCHAT_SESSAO']);
+                        $user = decriptografar($_SESSION['SUDOCHAT_SESSAO_ID']);
 
-                    $ATTB_ID = criptografar(ID);
-                    require_once '../pages/mensagem.php'; // Arquivo da mensagem
+                        $stmt = $pdo->prepare("UPDATE " . TB_SESSOES . "  SET " . SESSOES_ATTB_ESTADO . " = false WHERE " . SESSOES_ATTB_ESTADO . "=true AND " . SESSOES_ATTB_ID . "=:id AND " . SESSOES_ATTB_USER_ID . "=:user");
+                        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+                        $stmt->bindParam(':user', $user, PDO::PARAM_INT);
+
+                        $stmt->execute();
+                        // Destroi a sessão
+                        session_unset(); // Remove todas as variáveis da sessão
+                        session_destroy(); // Destroi a sessão completamente
+                    }
+
+                    $resp["status"] = "success";
+                    $resp["url"] = "/login";
+                    $resp["msg"] = "Sessão terminada com sucesso";
                 } catch (Exception $e) {
-                    echo "Houve um erro";
+                    $resp["status"] = "error";
+                    $resp["msg"] = "Erro ao terminar sessão: " . $e->getMessage();
                 } finally {
-
+                    echo json_encode($resp);
                     exit;
                 }
-            } else
-                //fazer login
-                if (isset($_POST["login"]) && isset($_POST["password"])) {
-                    try {
-                        $utilizador = $_POST["login"];
-
-                        $stmt = $pdo->prepare("SELECT * FROM " . TB_USER . " WHERE " . USER_ATTB_NOME . "=:utilizador OR " . USER_ATTB_EMAIL . "=:utilizador");
-                        $stmt->bindParam(':utilizador', $utilizador);
-                        $stmt->execute();
-
-                        if ($stmt->rowCount() > 0) {
-                            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                            if (password_verify($_POST["password"], $row[USER_ATTB_PASSWORD])) {
-                                $userID = $row[USER_ATTB_ID];
-                                $stmt = $pdo->prepare("UPDATE " . TB_SESSOES . "  SET " . SESSOES_ATTB_ESTADO . " = 0 WHERE " . SESSOES_ATTB_ESTADO . "=1 AND " . SESSOES_ATTB_USER_ID . "=:user");
-                                $stmt->bindParam(':user', $row[USER_ATTB_ID], PDO::PARAM_INT);
-
-                                $stmt->execute();
-
-                                // Query corrigida (usando corretamente as constantes)
-                                $sql = "INSERT INTO " . TB_SESSOES . " (" . SESSOES_ATTB_USER_ID . ", " . SESSOES_ATTB_TEMPO . ")  
-            VALUES (:SESSOES_ATTB_USER_ID, :SESSOES_ATTB_TEMPO)";
-                                // Chama a função dataActual
-                                $dataAtual = dataActual($pdo);
-                                $tempo = date('Y-m-d H:i:s', strtotime($dataAtual . ' +5 minutes'));
-
-                                $stmt = $pdo->prepare($sql);
-                                $stmt->bindParam(':SESSOES_ATTB_USER_ID', $row[USER_ATTB_ID], PDO::PARAM_INT);
-                                $stmt->bindParam(':SESSOES_ATTB_TEMPO', $tempo, PDO::PARAM_STR);
-                                // $stmt->execute();
-
-                                if ($stmt->execute()) {
-                                    $_SESSION['SUDOCHAT_SESSAO_ID'] = criptografar($row[USER_ATTB_ID]);
-                                    $_SESSION['USER_ATTB_NOME'] = criptografar($row[USER_ATTB_NOME]);
-                                    $_SESSION['USER_ATTB_EMAIL'] = criptografar($row[USER_ATTB_EMAIL]);
-                                    $_SESSION['USER_ATTB_FOTO'] = criptografar($row[USER_ATTB_FOTO]);
-                                    $_SESSION['SUDOCHAT_SESSAO'] = criptografar($pdo->lastInsertId());
-                                    // header("location: ../dashboard.php");
-                                    $resp["status"] = "success";
-                                    $resp["msg"] = "Login Efectuado com Successo";
-                                    $resp["url"] = "../";
-                                } else {
-                                    $resp["status"] = "error";
-                                    $resp["msg"] = "Erro ao registar a sessão";
-                                }
-                            } else {
-                                $resp["status"] = "error";
-                                $resp["msg"] = "Password errada";
-                            }
-                        } else {
-                            $resp["status"] = "error";
-                            $resp["msg"] = "Utilizador Não consta na nossa base de dados";
-                            // echo "ere name errado";
-                        }
-                    } catch (PDOException $e) {
-                        $resp["status"] = "error";
-                        $resp["msg"] = "Houve um erro ao tentar fazer login: " . $e;
-                        // echo json_encode(["erro" => "Erro ao salvar mensagem: " . $e->getMessage()]);
-                    } finally {
-                        echo json_encode($resp);
-                        exit;
-                    }
-                }
-                //pegar o id da ultima mensagem
-                else if (isset($_POST["ultimoID_do"]) && isset($_POST["tipo"])) {
-
-                    try {
-                        $ultimoID = $_POST["ultimoID_do"];
-                        $sql = "SELECT tm." . MENSAGENS_ATTB_ID . " as MENSAGENS_ATTB_ID FROM " . TB_MENSAGENS . " tm WHERE tm." . MENSAGENS_ATTB_DE . " =:id_mensagem OR tm." . MENSAGENS_ATTB_PARA . " =:id_mensagem ORDER BY tm." . MENSAGENS_ATTB_ID . " DESC LIMIT 1";
-
-                        if ($_POST["tipo"] == 2) {
-                            $sql = "SELECT tm." . MENSAGENS_USER_GRUPO_ATTB_ID . " as MENSAGENS_ATTB_ID FROM " . TB_MENSAGENS_USER_GRUPO . " tm WHERE tm." . MENSAGENS_USER_GRUPO_ATTB_GRUPO . "=:id_mensagem ORDER BY tm." . MENSAGENS_USER_GRUPO_ATTB_ID . " DESC LIMIT 1";
-                        }
-
-                        $stmt = $pdo->prepare($sql);
-                        $stmt->bindParam(':id_mensagem', $ultimoID, PDO::PARAM_INT);
-                        if ($stmt->execute()) {
-                            if ($stmt->rowCount() > 0) {
-                                $resp["status"] = "success";
-                                $resp["ultimoID"] = $stmt->fetch(PDO::FETCH_ASSOC)["MENSAGENS_ATTB_ID"];
-                            } else {
-                                $resp["status"] = "error";
-                            }
-                        } else {
-                            $resp["status"] = "success";
-                            $resp["ultimoID"] = 0;
-                        }
-                    } catch (PDOException $e) {
-                        $resp["status"] = "error";
-                        $resp["msg"] = "Erro ao buscar o último ID: " . $e->getMessage();
-                    } finally {
-                        echo json_encode($resp);
-                        exit;
-                    }
-                } else
-                    // Lógica para terminar sessão
-                    if (isset($_POST["terminarSessao"])) {
-                        try {
-
-                            if (isset($_SESSION['SUDOCHAT_SESSAO_ID']) && isset($_SESSION['SUDOCHAT_SESSAO'])) {
-                                $id = decriptografar($_SESSION['SUDOCHAT_SESSAO']);
-                                $user = decriptografar($_SESSION['SUDOCHAT_SESSAO_ID']);
-
-                                $stmt = $pdo->prepare("UPDATE " . TB_SESSOES . "  SET " . SESSOES_ATTB_ESTADO . " = false WHERE " . SESSOES_ATTB_ESTADO . "=true AND " . SESSOES_ATTB_ID . "=:id AND " . SESSOES_ATTB_USER_ID . "=:user");
-                                $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-                                $stmt->bindParam(':user', $user, PDO::PARAM_INT);
-
-                                $stmt->execute();
-                                // Destroi a sessão
-                                session_unset(); // Remove todas as variáveis da sessão
-                                session_destroy(); // Destroi a sessão completamente
-                            }
-
-                            $resp["status"] = "success";
-                            $resp["url"] = "/login";
-                            $resp["msg"] = "Sessão terminada com sucesso";
-                        } catch (Exception $e) {
-                            $resp["status"] = "error";
-                            $resp["msg"] = "Erro ao terminar sessão: " . $e->getMessage();
-                        } finally {
-                            echo json_encode($resp);
-                            exit;
-                        }
-                    }
+            }
     $input = json_decode(file_get_contents("php://input"), true);
     if ($input["acao"] === "criarGrupo") {
         $nome = $input["nome"];
@@ -426,6 +679,13 @@ ORDER BY
     }
 }
 
+// Busca apenas mensagens novas
+// $sql = "SELECT " . MENSAGENS_ATTB_ID . " as MENSAGENS_ATTB_ID, " . MENSAGENS_ATTB_MSG . " AS MENSAGENS_ATTB_MSG, " . MENSAGENS_ATTB_DE . " as MENSAGENS_ATTB_DE, " . MENSAGENS_ATTB_CRIADO_AOS . " as MENSAGENS_ATTB_CRIADO_AOS FROM " . TB_MENSAGENS . " 
+//             WHERE ((" . MENSAGENS_ATTB_DE . " = :de AND " . MENSAGENS_ATTB_PARA . " = :para) OR (" . MENSAGENS_ATTB_DE . " = :para AND " . MENSAGENS_ATTB_PARA . " = :de) 
+//             ) AND " . MENSAGENS_ATTB_ID . " > :ultimo_id 
+//             ORDER BY " . MENSAGENS_ATTB_ID . " ASC";
+
+// echo $sql;
 // if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
 // }

@@ -691,3 +691,9 @@ main {
 .input-busca .icone-busca {
   position: relative;
 }
+
+.anexo-imagem {
+  border-radius: 0;
+  width: 100px;
+  height: 100px;
+}
