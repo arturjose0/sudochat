@@ -9,8 +9,9 @@ echo <<<HTML
   </div>
   <form action="vendor/backend/sudomake.php" method="POST" id="chatForm">
     <input type="text" placeholder="Escreva uma mensagem" name="mensagem" />
-    <input type="file" name="anexos[]" id="anexos" style="display:none">
+    <input type="file" name="anexos[]" id="anexos" style="display:none" multiple>
     <input type="text" name="receptor" id="receptor" value="{$ATTB_ID}" style="display:none" readonly>
+    <input type="text" name="tipo" id="tipo" value="{$_POST['tipo']}" style="display:none" readonly>
     <button title="anexar" type="button">
         <label for="anexos" style="cursor: pointer">
 

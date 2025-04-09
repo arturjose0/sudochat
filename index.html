@@ -19,10 +19,16 @@
             src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?t=st=1743555705~exp=1743559305~hmac=fb04ae28a8512fe8af76eb993e6dea68c3de7e38691ed699887af3a51666ca34&w=740"
             alt="avatar"
           />
+          <b id="logado">JAK</b>
         </a>
         <ul>
           <li>
-            <a title="Conversas" href="#" id="listarConversasBtn">
+            <a
+              title="Conversas"
+              href="#"
+              id="listarConversasBtn"
+              onclick="carregarListaUsuarios(1)"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -54,7 +60,7 @@
             </a>
           </li>
           <li>
-            <a title="Grupos" href="#"
+            <a title="Grupos" href="#" onclick="carregarListaUsuarios(2)"
               ><svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -88,7 +94,7 @@
             </a>
           </li>
           <li>
-            <a title="Utilizadores" href="#">
+            <a title="Utilizadores" href="#" onclick="carregarListaUsuarios(3)">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -160,7 +166,7 @@
         </div>
         <div class="pesquisar">
           <form action="#">
-            <input type="search" placeholder="Pesquisar" />
+            <input type="search" placeholder="Pesquisar" id="pesquisar" />
             <button type="submit" title="pesquisar">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -195,7 +201,7 @@
             </svg>
             Mensagem
           </button>
-          <button>
+          <button title="Criar novo Grupo" onclick="abrirModalCriarGrupo()">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -234,6 +240,52 @@
         <!-- chat fim -->
       </div>
     </main>
+
+    <!-- Botão para abrir o modal -->
+    <!-- <button onclick="abrirModalCriarGrupo()">Criar Grupo</button> -->
+
+    <!-- Modal -->
+    <div id="modalCriarGrupo" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Criar um grupo</h2>
+          <span class="fechar-modal" onclick="fecharModalCriarGrupo()">×</span>
+        </div>
+        <div class="modal-body">
+          <!-- Campo para nome do grupo -->
+          <div class="input-grupo">
+            <label for="nomeGrupo"
+              ><span class="icone-grupo">👥</span> Nome do teu grupo</label
+            >
+            <input
+              type="text"
+              id="nomeGrupo"
+              placeholder="Digite o nome do grupo"
+            />
+          </div>
+          <!-- Campo de busca -->
+          <div class="input-busca">
+            <span class="icone-busca">🔍</span>
+            <input
+              type="text"
+              id="buscaMembros"
+              placeholder="Pesquisar quem pretendes adicionar"
+              oninput="buscarMembros()"
+            />
+          </div>
+          <!-- Lista de usuários -->
+          <div class="lista-usuarios" id="listaMembros">
+            <!-- Usuários serão adicionados dinamicamente aqui -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancelar" onclick="fecharModalCriarGrupo()">
+            Cancelar
+          </button>
+          <button class="btn-criar" onclick="criarGrupo()">Criar</button>
+        </div>
+      </div>
+    </div>
 
     <script src="vendor/assets/js/josearturkassala.js"></script>
   </body>

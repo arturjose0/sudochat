@@ -5,7 +5,12 @@ let ultimoId = -1;
 let LASTID = 0;
 let tocar = false;
 let page = 0;
+let userActivo = null;
 
+let tipoA = 1;
+
+// Array global para armazenar os dados dos usuários
+let listaUsuarios = [];
 
 function abrirmenumsg() {
    let elemento = document.querySelector(".recursos_conter") || document.querySelector(".recursos");
@@ -40,46 +45,223 @@ function removerClasseActivo() {
    });
 }
 
-function carregarListaUsuarios() {
-   if (container = document.querySelector(".baixo")) {
-      fetch("/vendor/backend/sudomake.php?usuarios")
-         .then(response => response.json())
-         .then(data => {
-            normalizarMeno();
-            document.getElementById("conversasDesfoco").classList.add("esconder");
-            document.getElementById("conversasFoco").classList.remove("esconder");
+function carregarListaUsuarios(tipo = 1) {
+   const container = document.querySelector(".baixo");
+   if (!container) return; // Sai se o container não existir
 
-            container.innerHTML = ""; // Limpa o conteúdo anterior
+   fetch("/vendor/backend/sudomake.php?usuarios=" + tipo)
+      .then(response => response.json())
+      .then(data => {
+         // Normaliza o menu (mantido como estava)
+         normalizarMeno();
 
-            data.forEach(user => {
-               const nomeFormatado = formatarNome(user.USER_ATTB_NOME, 13);
+         // Atualiza a visibilidade dos elementos com base no tipo
+         switch (tipo) {
+            case 3:
+               document.getElementById("UtilizadoresDesfoco").classList.add("esconder");
+               document.getElementById("UtilizadoresFoco").classList.remove("esconder");
+               break;
+            case 2:
+               document.getElementById("gruposDesfoco").classList.add("esconder");
+               document.getElementById("gruposFoco").classList.remove("esconder");
+               break;
+            default:
+               document.getElementById("conversasDesfoco").classList.add("esconder");
+               document.getElementById("conversasFoco").classList.remove("esconder");
+         }
 
-               const userElement = document.createElement("a");
-               userElement.href = user.USER_ATTB_ID;
-               userElement.id = "u_" + user.USER_ATTB_ID;
-               userElement.classList.add("mensagem");
-               userElement.innerHTML = `
-                        <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=740" alt="Avatar">
-                        <div class="dois">
-                            <div class="nome">${nomeFormatado}</div>
-                            <p>Escrevendo...</p>
-                        </div>
-                        <span>${new Date().toLocaleTimeString()}</span>
-                    `;
+         // Compara os dados novos com os anteriores
+         if (JSON.stringify(listaUsuarios) !== JSON.stringify(data)) {
+            // Atualiza o array global apenas se houver mudanças
+            listaUsuarios = data;
 
-               userElement.addEventListener("click", function (event) {
-                  event.preventDefault();
-                  JanelaDeMensagens(user.USER_ATTB_ID);
-                  removerClasseActivo();
-                  this.classList.add("activo"); // Usa 'this' para referenciar o <a> clicado
-               });
+            // Limpa o container e renderiza os novos dados
+            container.innerHTML = "";
+            renderizarUsuarios(container, tipo);
+            if (tipoA == tipo) {
+               if (userActivo > 0) {
+                  if (elemento = document.getElementById("u_" + userActivo)) {
+                     if (!elemento.classList.contains("activo")) {
+                        elemento.classList.add("activo"); // Usa 'this' para referenciar o <a> clicado
+                     }
+                  }
+               }
+            } else {
+               tipoA = tipo;
+            }
+         } else {
+            // console.log("Nenhuma mudança detectada nos dados.");
+         }
+      })
+      .catch(error => mostrarAlert(error));
+}
 
-               container.appendChild(userElement);
+// Função para renderizar os usuários no DOM
+function renderizarUsuarios(container, tipo) {
+   listaUsuarios.forEach(user => {
+      const nomeFormatado = formatarNome(user.USER_ATTB_NOME, 18);
+
+      const userElement = document.createElement("a");
+      userElement.href = user.USER_ATTB_ID;
+      userElement.id = "u_" + user.USER_ATTB_ID;
+      userElement.classList.add("mensagem");
+
+      let estado = "<b style='color: " + (user.sessao ? "#34C759" : "#FF9800") + "; font-size: 22px'>•</b>";
+      let dataAtual = "<b style='color: green; font-size: 20px'>•</b>";
+      if (tipo === 1 || tipo === 2) {
+         const [data, hora] = user.MENSAGENS_ATTB_CRIADO_AOS.split(" ");
+         const agora = new Date();
+         const dataAtualHoje = agora.toISOString().split("T")[0];
+         dataAtual = dataAtualHoje !== data ? data : hora;
+
+      }
+      if (tipo === 1) {
+         userElement.innerHTML = `
+            <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=740" alt="Avatar">
+            <div class="dois" title=${user.USER_ATTB_NOME}>
+                <div class="nome">${formatarNome(user.USER_ATTB_NOME, 18)}</div>
+                <p style='display: flex; align-items: center'>${estado} ${formatarNome(user.MENSAGENS_ATTB_MSG, 22)}</p>
+            </div>
+            <span>${dataAtual}</span>
+        `;
+      } else if (tipo == 2) {
+         userElement.innerHTML = `
+            <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=740" alt="Avatar">
+            <div class="dois" title=${user.USER_ATTB_NOME}>
+                <div class="nome">${formatarNome(user.USER_ATTB_NOME, 18)}</div>
+                <p style='display: flex; align-items: center'><b>${formatarNome(user.sessao, 7)}</b>&nbsp; ${formatarNome(user.MENSAGENS_ATTB_MSG, 13)}</p>
+            </div>
+            <span>${dataAtual}</span>
+        `;
+      }
+      else {
+         userElement.innerHTML = `
+            <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=740" alt="Avatar">
+            <div class="dois" title=${user.USER_ATTB_NOME}>
+                <div class="nome">${nomeFormatado}</div>
+            </div>
+            <span style='display: flex'>${estado}</span>
+        `;
+      }
+
+      userElement.addEventListener("click", function (event) {
+         event.preventDefault();
+         JanelaDeMensagens(user.USER_ATTB_ID);
+         removerClasseActivo();
+         userActivo = user.USER_ATTB_ID;
+         this.classList.add("activo");
+      });
+
+      container.appendChild(userElement);
+   });
+}
+
+function pesquisarUsuario() {
+   const pesquisar = document.getElementById("pesquisar");
+   const container = document.querySelector(".baixo");
+
+   if (pesquisar && container) {
+      pesquisar.addEventListener("input", () => {
+         let resultados;
+         const termoPesquisa = pesquisar.value.trim().toLowerCase();
+
+         if (termoPesquisa === "") {
+            resultados = listaUsuarios; // Mostra todos os usuários se o campo estiver vazio
+         } else {
+            resultados = listaUsuarios.filter(user => {
+               // Normaliza o nome do usuário, removendo acentos
+               const nomeNormalizado = user.USER_ATTB_NOME
+                  .normalize("NFD") // Decompõe em caracteres base + diacríticos
+                  .replace(/[\u0300-\u036f]/g, "") // Remove os diacríticos
+                  .toLowerCase();
+               // Normaliza o termo de pesquisa, removendo acentos
+               const termoNormalizado = termoPesquisa
+                  .normalize("NFD")
+                  .replace(/[\u0300-\u036f]/g, "");
+               return nomeNormalizado.includes(termoNormalizado);
             });
-         })
-         .catch(error => console.error("Erro ao buscar usuários:", error));
+         }
+
+         console.log("Usuários encontrados:", resultados);
+
+         // Limpa e renderiza os resultados
+         container.innerHTML = "";
+         renderizarUsuariosFiltrados(container, resultados);
+         if (userActivo > 0) {
+            if (elemento = document.getElementById("u_" + userActivo)) {
+               if (!elemento.classList.contains("activo")) {
+                  elemento.classList.add("activo"); // Usa 'this' para referenciar o <a> clicado
+               }
+            }
+         }
+      });
+   } else {
+      console.error("Elemento #pesquisar ou .baixo não encontrado.");
    }
 }
+
+// Função para renderizar os usuários filtrados
+function renderizarUsuariosFiltrados(container, usuarios, tipo = tipoA) {
+   usuarios.forEach(user => {
+      const nomeFormatado = formatarNome(user.USER_ATTB_NOME, 18);
+
+      const userElement = document.createElement("a");
+      userElement.href = user.USER_ATTB_ID;
+      userElement.id = "u_" + user.USER_ATTB_ID;
+      userElement.classList.add("mensagem");
+
+      let estado = "<b style='color: " + (user.sessao ? "#34C759" : "#FF9800") + "; font-size: 22px'>•</b>";
+
+      let dataAtual = "•";
+      if (Number(tipo) === 1 && user.MENSAGENS_ATTB_CRIADO_AOS) {
+         const [data, hora] = user.MENSAGENS_ATTB_CRIADO_AOS.split(" ");
+         const agora = new Date();
+         const dataAtualHoje = agora.toISOString().split("T")[0];
+         dataAtual = dataAtualHoje !== data ? data : hora;
+
+         userElement.innerHTML = `
+            <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=740" alt="Avatar">
+            <div class="dois" title=${user.USER_ATTB_NOME}>
+                <div class="nome">${nomeFormatado}</div>
+                <p>${estado} ${formatarNome(user.MENSAGENS_ATTB_MSG, 22)}</p>
+            </div>
+            <span>${dataAtual}</span>
+        `;
+      } else if (Number(tipo) === 2) {
+         userElement.innerHTML = `
+            <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=740" alt="Avatar">
+            <div class="dois" title=${user.USER_ATTB_NOME}>
+                <div class="nome">${formatarNome(user.USER_ATTB_NOME, 18)}</div>
+                <p style='display: flex; align-items: center'>${formatarNome(user.sessao, 10)} ${formatarNome(user.MENSAGENS_ATTB_MSG, 22)}</p>
+            </div>
+            <span>${user.MENSAGENS_ATTB_CRIADO_AOS}</span>
+        `;
+      }
+      else {
+
+         userElement.innerHTML = `
+            <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=740" alt="Avatar">
+            <div class="dois" title=${user.USER_ATTB_NOME}>
+                <div class="nome">${nomeFormatado}</div>
+            </div>
+            <span>${estado}</span>
+        `;
+      }
+
+      userElement.addEventListener("click", function (event) {
+         event.preventDefault();
+         JanelaDeMensagens(user.USER_ATTB_ID);
+         removerClasseActivo();
+         userActivo = user.USER_ATTB_ID;
+         this.classList.add("activo");
+      });
+
+      container.appendChild(userElement);
+   });
+}
+
+// Chama a função para inicializar o evento
+pesquisarUsuario();
 
 carregarListaUsuarios();
 
@@ -89,7 +271,7 @@ function JanelaDeMensagens(id) {
       headers: {
          "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: `id=${encodeURIComponent(id)}`
+      body: `id=${encodeURIComponent(id)}&tipo=${tipoA}`
    })
       .then(response => response.text())
       .then(html => {
@@ -118,18 +300,7 @@ function JanelaDeMensagens(id) {
 }
 
 function formatarNome(nome, tamanho) {
-   return nome.length > tamanho ? nome.substring(0, tamanho) + "..." : nome;
-}
-
-// carregarListaUsuarios();
-
-if (listarConversasBtn = document.getElementById("listarConversasBtn")) {
-
-   listarConversasBtn.addEventListener("click", function (event) {
-      event.preventDefault(); // Impede o comportamento padrão do link
-      carregarListaUsuarios();
-   });
-
+   return nome ? (nome.length > tamanho ? nome.substring(0, tamanho - 3) + "..." : nome) : "";
 }
 
 function carregarMensagens(para) {
@@ -139,7 +310,7 @@ function carregarMensagens(para) {
          headers: {
             "Content-Type": "application/x-www-form-urlencoded",
          },
-         body: `para=${encodeURIComponent(para)}&ultimo_id=${encodeURIComponent(ultimoId)}`
+         body: `para=${encodeURIComponent(para)}&ultimo_id=${encodeURIComponent(ultimoId)}&tipo=${tipoA}`
       })
          .then(response => response.json())
          .then(mensagens => {
@@ -180,12 +351,6 @@ function carregarMensagens(para) {
       </div>
                         `;
 
-                  if (ultimoId >= LASTID && tocar) {
-                     // alert(ultimoId + " > " + LASTID);
-                     tocarSom();
-                     // tocar = false; // Define tocar como falso após tocar o som
-                  }
-
                }
 
                conteudo.appendChild(div);
@@ -207,25 +372,29 @@ function ultimoID_do(para) {
          const xhr = new XMLHttpRequest();
          xhr.open("POST", "/vendor/backend/sudomake.php", false); // false = síncrono
          xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-         xhr.send(`ultimoID_do=${encodeURIComponent(para)}`);
+         xhr.send(`ultimoID_do=${encodeURIComponent(para)}&&tipo=${tipoA}`);
 
          if (xhr.status === 200) {
             const resp = JSON.parse(xhr.responseText);
             if (resp.status === "success") {
                return Number(resp.ultimoID); // Retorna o último ID como número
             } else {
+               // mostrarAlert("Nenhum ID encontrado ou erro na resposta: " + (resp.msg || "Sem mensagem"))
                console.log("Nenhum ID encontrado ou erro na resposta:", resp.msg || "Sem mensagem");
                return 0;
             }
          } else {
-            throw new Error("Erro na requisição: " + xhr.status);
+            mostrarAlert("Erro na requisição: " + xhr.status)
+            // throw new Error("Erro na requisição: " + xhr.status);
          }
       } else {
-         console.log("Elemento 'conteudo' não encontrado");
+         mostrarAlert("Elemento 'conteudo' não encontrado")
+         // console.log("Elemento 'conteudo' não encontrado");
          return 0;
       }
    } catch (error) {
-      console.log("Erro ao fazer a requisição: " + error);
+      mostrarAlert("Erro ao fazer a requisição: " + error)
+      // console.log("Erro ao fazer a requisição: " + error);
       return 0;
    }
 }
@@ -233,7 +402,8 @@ function ultimoID_do(para) {
 // setInterval(() => carregarMensagens(1, 2), 5000);
 setInterval(() => {
    carregarMensagens(RECEPTOR);
-
+   // carregarListaUsuarios();
+   carregarListaUsuarios(tipoA); // Verifica tipo 1 (conversas) como padrão
 }, 1000);
 
 function tocarSom() {
@@ -271,6 +441,10 @@ function verificarSessao() {
             location.href = "/login";
          } else if (data.status === "success" && content) {
             LOGADO = data.SUDOCHAT_SESSAO_ID;
+            if (nnome = document.getElementById("logado")) {
+               nnome.innerText = pegarIniciais(data.SUDOCHAT_SESSAO_NOME);
+               nnome.title = data.SUDOCHAT_SESSAO_NOME;
+            }
          }
       })
       .catch(error => {
@@ -312,6 +486,16 @@ if (logout = document.getElementById("terminarSessaoBtn")) {
       event.preventDefault(); // Impede o comportamento padrão do link
       terminarSessao();
    });
+}
+
+function pegarIniciais(nome) {
+   // Divide o nome em palavras, filtra palavras vazias e pega a primeira letra de cada uma
+   const iniciais = nome
+      .split(" ") // Divide por espaços
+      .filter(palavra => palavra.length > 0) // Remove espaços extras
+      .map(palavra => palavra.charAt(0).toUpperCase()) // Pega a primeira letra e capitaliza
+      .join(""); // Junta as letras
+   return iniciais;
 }
 // ---- ANIMACOES, EFEITOS E MECANICAS DE FORMULARIOS
 // Adiciona o CSS para o spinner
@@ -656,4 +840,136 @@ function validar(url, elemento) {
          console.log(url);
       });
 
+}
+
+//-----modal
+
+// Arrays para armazenar membros e administradores
+let membrosAdicionados = [];
+let adminsAdicionados = [];
+
+function abrirModalCriarGrupo() {
+   const modal = document.getElementById("modalCriarGrupo");
+   modal.style.display = "flex";
+   buscarMembros();
+}
+
+function fecharModalCriarGrupo() {
+   const modal = document.getElementById("modalCriarGrupo");
+   modal.style.display = "none";
+   document.getElementById("nomeGrupo").value = "";
+   document.getElementById("buscaMembros").value = "";
+   membrosAdicionados = [];
+   adminsAdicionados = [];
+   buscarMembros();
+}
+
+function buscarMembros() {
+   const termo = document.getElementById("buscaMembros").value.toLowerCase();
+   const listaMembros = document.getElementById("listaMembros");
+
+   const usuariosFiltrados = listaUsuarios.filter(user => {
+      const nomeNormalizado = user.USER_ATTB_NOME
+         .normalize("NFD")
+         .replace(/[\u0300-\u036f]/g, "")
+         .toLowerCase();
+      return nomeNormalizado.includes(termo);
+   });
+
+   listaMembros.innerHTML = "";
+
+   usuariosFiltrados.forEach(user => {
+      const item = document.createElement("div");
+      item.classList.add("usuario-item");
+
+      const estaAdicionado = membrosAdicionados.includes(user.USER_ATTB_ID);
+      const ehAdmin = adminsAdicionados.includes(user.USER_ATTB_ID);
+
+      item.innerHTML = `
+            <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?w=740" alt="Avatar">
+            <span>${user.USER_ATTB_NOME}</span>
+            <div class="admin-checkbox" style="${estaAdicionado ? '' : 'display: none;'}">
+                <input type="checkbox" id="admin_${user.USER_ATTB_ID}" ${ehAdmin ? 'checked' : ''} onchange="toggleAdmin(${user.USER_ATTB_ID}, this)">
+                <label for="admin_${user.USER_ATTB_ID}">Admin</label>
+            </div>
+            <button class="${estaAdicionado ? 'btn-added' : 'btn-add'}" onclick="toggleMembro(${user.USER_ATTB_ID}, this)">
+                ${estaAdicionado ? '✓ Adicionado' : '+ Add'}
+            </button>
+        `;
+      listaMembros.appendChild(item);
+   });
+}
+
+function toggleMembro(userId, botao) {
+   const index = membrosAdicionados.indexOf(userId);
+   const adminCheckbox = botao.parentElement.querySelector(".admin-checkbox");
+
+   if (index === -1) {
+      // Adiciona o membro
+      membrosAdicionados.push(userId);
+      botao.classList.remove("btn-add");
+      botao.classList.add("btn-added");
+      botao.innerHTML = "✓ Adicionado";
+      adminCheckbox.style.display = "block";
+   } else {
+      // Remove o membro e o admin (se aplicável)
+      membrosAdicionados.splice(index, 1);
+      const adminIndex = adminsAdicionados.indexOf(userId);
+      if (adminIndex !== -1) {
+         adminsAdicionados.splice(adminIndex, 1);
+      }
+      botao.classList.remove("btn-added");
+      botao.classList.add("btn-add");
+      botao.innerHTML = "+ Add";
+      adminCheckbox.style.display = "none";
+   }
+}
+
+function toggleAdmin(userId, checkbox) {
+   const index = adminsAdicionados.indexOf(userId);
+   if (checkbox.checked) {
+      if (index === -1) {
+         adminsAdicionados.push(userId);
+      }
+   } else {
+      if (index !== -1) {
+         adminsAdicionados.splice(index, 1);
+      }
+   }
+}
+
+function criarGrupo() {
+   const nomeGrupo = document.getElementById("nomeGrupo").value.trim();
+   if (!nomeGrupo) {
+      // alert("Por favor, insira o nome do grupo.");
+      mostrarAlert("Por favor, insira o nome do grupo.", "warning");
+
+      return;
+   }
+   if (membrosAdicionados.length === 0) {
+      mostrarAlert("Por favor, adicione pelo menos um membro ao grupo.", "warning");
+      return;
+   }
+
+   fetch("/vendor/backend/sudomake.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+         acao: "criarGrupo",
+         nome: nomeGrupo,
+         membros: membrosAdicionados,
+         administradores: adminsAdicionados
+      })
+   })
+      .then(response => response.json())
+      .then(data => {
+         if (data.success) {
+            mostrarAlert("Grupo criado com sucesso!", "success");
+            fecharModalCriarGrupo();
+            carregarListaUsuarios(2);
+         } else {
+            mostrarAlert("Erro ao criar grupo: " + data.message);
+         }
+      })
+      .catch(error => console.error("Erro ao criar grupo:", error));
 }
