@@ -49,7 +49,7 @@ function carregarListaUsuarios(tipo = 1) {
    const container = document.querySelector(".baixo");
    if (!container) return; // Sai se o container não existir
 
-   fetch("/vendor/backend/sudomake.php?usuarios=" + tipo)
+   fetch("vendor/backend/sudomake.php?usuarios=" + tipo)
       .then(response => response.json())
       .then(data => {
          // Normaliza o menu (mantido como estava)
@@ -266,7 +266,7 @@ pesquisarUsuario();
 carregarListaUsuarios();
 
 function JanelaDeMensagens(id) {
-   fetch("/vendor/backend/sudomake.php", {
+   fetch("vendor/backend/sudomake.php", {
       method: "POST",
       headers: {
          "Content-Type": "application/x-www-form-urlencoded",
@@ -305,7 +305,7 @@ function formatarNome(nome, tamanho) {
 
 function carregarMensagens(para) {
    if (document.getElementById("conteudo")) {
-      fetch("/vendor/backend/sudomake.php", {
+      fetch("vendor/backend/sudomake.php", {
          method: "POST",
          headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -342,10 +342,11 @@ function carregarMensagens(para) {
        <div class="receptor">
         <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?t=st=1743555705~exp=1743559305~hmac=fb04ae28a8512fe8af76eb993e6dea68c3de7e38691ed699887af3a51666ca34&w=740" alt="">
         <div class="texto">
-          <div class="datahora" title='data e hora de envio'>${msg.MENSAGENS_ATTB_CRIADO_AOS}</div>
+          <div class="datahora" title='data e hora de envio'><b>${tipoA == 2 ? msg.USER_ATTB_NOME : ''}</b></div>
           <div class="msg">
-            ${msg.MENSAGENS_ATTB_MSG}
+          ${msg.MENSAGENS_ATTB_MSG}
           </div>
+          <div class="datahora" title='data e hora de envio'>${msg.MENSAGENS_ATTB_CRIADO_AOS}</div>
         </div>
         </div>
       </div>
@@ -360,7 +361,10 @@ function carregarMensagens(para) {
                document.getElementById("conteudo").scrollTop = conteudo.scrollHeight;
             });
          })
-         .catch(error => console.error("Erro ao carregar mensagens:", error));
+         .catch(error => {
+            mostrarAlert("Erro ao carregar mensagens: " + error)
+            console.error("Erro ao carregar mensagens:", error)
+         });
    }
 }
 
@@ -370,7 +374,7 @@ function ultimoID_do(para) {
       // Verifica se o elemento com id "conteudo" existe
       if (document.getElementById("conteudo")) {
          const xhr = new XMLHttpRequest();
-         xhr.open("POST", "/vendor/backend/sudomake.php", false); // false = síncrono
+         xhr.open("POST", "vendor/backend/sudomake.php", false); // false = síncrono
          xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
          xhr.send(`ultimoID_do=${encodeURIComponent(para)}&&tipo=${tipoA}`);
 
@@ -407,7 +411,7 @@ setInterval(() => {
 }, 1000);
 
 function tocarSom() {
-   const som = new Audio('/vendor/assets/musics/notification.mp3'); // Caminho para o ficheiro de áudio
+   const som = new Audio('vendor/assets/musics/notification.mp3'); // Caminho para o ficheiro de áudio
    som.play().catch(function (error) {
       console.error("Erro ao tentar reproduzir o som:", error);
    });
@@ -416,7 +420,12 @@ function tocarSom() {
 
 // Função para consultar o status da sessão
 function verificarSessao() {
-   fetch("/vendor/backend/sudomake.php?isLoggedIn=true", {
+   if (document.getElementById("mensagens")) {
+      uuu = "vendor/backend/sudomake.php?isLoggedIn=true";
+   } else {
+      uuu = "../vendor/backend/sudomake.php?isLoggedIn=true"
+   }
+   fetch(uuu, {
       method: "GET",
       headers: {
          "Content-Type": "application/json"
@@ -438,7 +447,7 @@ function verificarSessao() {
          if (data.status === "success" && !content) {
             location.href = "../";
          } else if (data.status != "success" && content) {
-            location.href = "/login";
+            location.href = "login";
          } else if (data.status === "success" && content) {
             LOGADO = data.SUDOCHAT_SESSAO_ID;
             if (nnome = document.getElementById("logado")) {
@@ -459,7 +468,7 @@ setInterval(verificarSessao, 10000); // Repete a cada 5 segundos (5000ms)
 
 // Função para terminar a sessão
 function terminarSessao() {
-   fetch("/vendor/backend/sudomake.php", {
+   fetch("vendor/backend/sudomake.php", {
       method: "POST",
       headers: {
          "Content-Type": "application/x-www-form-urlencoded"
@@ -702,6 +711,8 @@ function capturarIDdoFormulario(event) {
                mostrarAlert(data['msg']);
             else {
                form.reset();
+               if (document.getElementById("anexos"))
+                  desvincularAnexos();
                // alertDiv.className = "alert alert-success alert-dismissible";
                // alertDiv.innerHTML = data['msg'];
                if (form.querySelector('img'))
@@ -951,7 +962,7 @@ function criarGrupo() {
       return;
    }
 
-   fetch("/vendor/backend/sudomake.php", {
+   fetch("vendor/backend/sudomake.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -972,4 +983,36 @@ function criarGrupo() {
          }
       })
       .catch(error => console.error("Erro ao criar grupo:", error));
+}
+
+
+function mudancaAnexos() {
+   const inputAnexos = document.getElementById("anexos");
+   const arquivosEnviar = document.getElementById("arquivosEnviar");
+   const contagemAnexos = document.getElementById("contagemAnexos");
+   const quantidadeAnexos = inputAnexos.files.length;
+
+   if (quantidadeAnexos > 0) {
+      // Mostra o .arquivosEnviar se houver anexos
+      arquivosEnviar.style.display = "flex";
+      // Atualiza a contagem de anexos
+      contagemAnexos.textContent = `(${quantidadeAnexos}) Carregados`;
+   } else {
+      // Esconde o .arquivosEnviar se não houver anexos
+      arquivosEnviar.style.display = "none";
+   }
+}
+
+// Função para desvincular todos os anexos
+function desvincularAnexos() {
+   const inputAnexos = document.getElementById("anexos");
+   const arquivosEnviar = document.getElementById("arquivosEnviar");
+   const contagemAnexos = document.getElementById("contagemAnexos");
+
+   // Limpa o input de arquivos
+   inputAnexos.value = "";
+   // Esconde o .arquivosEnviar
+   arquivosEnviar.style.display = "none";
+   // Reseta a contagem de anexos
+   contagemAnexos.textContent = "(0) Carregados";
 }

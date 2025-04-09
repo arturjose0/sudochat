@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
                   container.appendChild(userElement);
                });
             })
-            .catch(error => console.error("Erro ao buscar usuários:", error));
+         // .catch(error => console.error("Erro ao buscar usuários:", error));
       }
 
       function JanelaDeMensagens(id) {
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", function () {
                   forms[i].addEventListener("submit", capturarIDdoFormulario);
                }
             })
-            .catch(error => console.error("Erro ao carregar mensagens:", error));
+         // .catch(error => console.error("Erro ao carregar mensagens:", error));
       }
 
 
@@ -161,7 +161,7 @@ function carregarMensagens(para) {
                document.getElementById("conteudo").scrollTop = conteudo.scrollHeight;
             });
          })
-         .catch(error => console.error("Erro ao carregar mensagens:", error));
+      // .catch(error => console.error("Erro ao carregar mensagens:", error));
    }
 }
 
@@ -197,10 +197,10 @@ function ultimoID_do(para) {
 }
 
 // setInterval(() => carregarMensagens(1, 2), 5000);
-setInterval(() => {
-   carregarMensagens(RECEPTOR);
+// setInterval(() => {
+//    carregarMensagens(RECEPTOR);
 
-}, 1000);
+// }, 1000);
 
 function tocarSom() {
    const som = new Audio('/vendor/assets/musics/notification.mp3'); // Caminho para o ficheiro de áudio
@@ -240,7 +240,7 @@ function verificarSessao() {
          }
       })
       .catch(error => {
-         showAlert("Erro ao verificar sessão: " + error, "error", 10000);
+         // showAlert("Erro ao verificar sessão: " + error, "error", 10000);
       });
 }
 
@@ -479,10 +479,10 @@ function capturarIDdoFormulario(event) {
             //pegar os parametros necessarios caso for sucesso
             // alertDiv.innerHTML = data['msg'];
 
-            if (data['status'] == "error")
+            if (data['status'] == "error") {
                // alert(data['msg']);
                // showAlert(data['msg']);
-            else {
+            } else {
                form.reset();
                // alertDiv.className = "alert alert-success alert-dismissible";
                // alertDiv.innerHTML = data['msg'];
@@ -622,4 +622,40 @@ function validar(url, elemento) {
          console.log(url);
       });
 
+}
+
+
+document.addEventListener("DOMContentLoaded", function () {
+   const inputAnexos = document.getElementById("anexos");
+   const arquivosEnviar = document.getElementById("arquivosEnviar");
+   const contagemAnexos = document.getElementById("contagemAnexos");
+
+   // Monitora mudanças no input de arquivos
+   inputAnexos.addEventListener("change", function () {
+      const quantidadeAnexos = inputAnexos.files.length;
+
+      if (quantidadeAnexos > 0) {
+         // Mostra o .arquivosEnviar se houver anexos
+         arquivosEnviar.style.display = "flex";
+         // Atualiza a contagem de anexos
+         contagemAnexos.textContent = `(${quantidadeAnexos}) Carregados`;
+      } else {
+         // Esconde o .arquivosEnviar se não houver anexos
+         arquivosEnviar.style.display = "none";
+      }
+   });
+});
+
+// Função para desvincular todos os anexos
+function desvincularAnexos() {
+   const inputAnexos = document.getElementById("anexos");
+   const arquivosEnviar = document.getElementById("arquivosEnviar");
+   const contagemAnexos = document.getElementById("contagemAnexos");
+
+   // Limpa o input de arquivos
+   inputAnexos.value = "";
+   // Esconde o .arquivosEnviar
+   arquivosEnviar.style.display = "none";
+   // Reseta a contagem de anexos
+   contagemAnexos.textContent = "(0) Carregados";
 }

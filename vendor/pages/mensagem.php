@@ -7,9 +7,32 @@ echo <<<HTML
     <!-- as mensagens -->
      
   </div>
-  <form action="vendor/backend/sudomake.php" method="POST" id="chatForm">
+  <div class="arquivosEnviar" id="arquivosEnviar" style="display: none">
+            <div class="pacote" id="pacoteAnexos">
+              <button class="fechar" onclick="desvincularAnexos()">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  class="size-6"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </button>
+              <img
+                src="https://img.freepik.com/free-photo/stack-document-folders-icon-isolated_53876-144710.jpg?t=st=1744195327~exp=1744198927~hmac=5f6c9aab5c00734c6b6ed59a7cc7922d0bab475ddf857e72bf99c63962afe026&w=740"
+                alt=""
+              />
+              <div class="titulo" id="contagemAnexos">(0) Carregados</div>
+            </div>
+          </div>
+  <form action="vendor/backend/sudomake.php" method="POST" id="chatForm" enctype="multipart/form-data">
     <input type="text" placeholder="Escreva uma mensagem" name="mensagem" />
-    <input type="file" name="anexos[]" id="anexos" style="display:none" multiple>
+    <input type="file" onchange="mudancaAnexos()" name="anexos[]" id="anexos" style="display:none" multiple>
     <input type="text" name="receptor" id="receptor" value="{$ATTB_ID}" style="display:none" readonly>
     <input type="text" name="tipo" id="tipo" value="{$_POST['tipo']}" style="display:none" readonly>
     <button title="anexar" type="button">

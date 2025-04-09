@@ -4,7 +4,7 @@ require_once 'JoseArturKassala.php'; // Arquivo com a conexão ao banco de dados
 if (($_SERVER["REQUEST_METHOD"] === "POST" && validarLogin($pdo)) || $_SERVER["REQUEST_METHOD"] === "POST" && !validarLogin($pdo) && isset($_POST['login']) && isset($_POST['password'])) {
 
     //pegar todas as mensagens enviadas e recebidas
-    if (isset($_POST['para']) && isset($_POST['ultimo_id'])) {
+    if (isset($_POST['para']) && isset($_POST['ultimo_id']) && isset($_POST['tipo'])) {
 
         try {
             $de = (int) decriptografar($_SESSION['SUDOCHAT_SESSAO_ID']);
@@ -12,13 +12,19 @@ if (($_SERVER["REQUEST_METHOD"] === "POST" && validarLogin($pdo)) || $_SERVER["R
             $ultimo_id = (int) $_POST['ultimo_id'];
 
             // Busca apenas mensagens novas
-            $sql = "SELECT " . MENSAGENS_ATTB_ID . " as " . MENSAGENS_ATTB_ID . ", " . MENSAGENS_ATTB_MSG . " AS " . MENSAGENS_ATTB_MSG . ", " . MENSAGENS_ATTB_DE . " as " . MENSAGENS_ATTB_DE . ", " . MENSAGENS_ATTB_CRIADO_AOS . " as " . MENSAGENS_ATTB_CRIADO_AOS . " FROM " . TB_MENSAGENS . " 
+            $sql = "SELECT " . MENSAGENS_ATTB_ID . " as MENSAGENS_ATTB_ID, " . MENSAGENS_ATTB_MSG . " AS MENSAGENS_ATTB_MSG, " . MENSAGENS_ATTB_DE . " as MENSAGENS_ATTB_DE, " . MENSAGENS_ATTB_CRIADO_AOS . " as MENSAGENS_ATTB_CRIADO_AOS FROM " . TB_MENSAGENS . " 
             WHERE ((" . MENSAGENS_ATTB_DE . " = :de AND " . MENSAGENS_ATTB_PARA . " = :para) OR (" . MENSAGENS_ATTB_DE . " = :para AND " . MENSAGENS_ATTB_PARA . " = :de) 
             ) AND " . MENSAGENS_ATTB_ID . " > :ultimo_id 
             ORDER BY " . MENSAGENS_ATTB_ID . " ASC";
 
+            if ($_POST['tipo'] == 2) {
+                $sql = "SELECT tm." . MENSAGENS_USER_GRUPO_ATTB_ID . " as MENSAGENS_ATTB_ID, tm." . MENSAGENS_USER_GRUPO_ATTB_MSG . " AS MENSAGENS_ATTB_MSG, tm." . MENSAGENS_USER_GRUPO_ATTB_MEMBRO . " as MENSAGENS_ATTB_DE, tm." . MENSAGENS_USER_GRUPO_ATTB_CRIADO_AOS . " as MENSAGENS_ATTB_CRIADO_AOS, u." . USER_ATTB_NOME . " as USER_ATTB_NOME FROM " . TB_MENSAGENS_USER_GRUPO . " tm LEFT JOIN " . TB_USER . " u ON u.id=tm." . MENSAGENS_USER_GRUPO_ATTB_MEMBRO . " WHERE tm." . MENSAGENS_USER_GRUPO_ATTB_GRUPO . "=:para AND tm." . MENSAGENS_USER_GRUPO_ATTB_ID . ">:ultimo_id";
+            }
+
             $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':de', $de, PDO::PARAM_INT);
+            if ($_POST['tipo'] != 2)
+                $stmt->bindParam(':de', $de, PDO::PARAM_INT);
+
             $stmt->bindParam(':para', $para, PDO::PARAM_INT);
             $stmt->bindParam(':ultimo_id', $ultimo_id, PDO::PARAM_INT);
             $stmt->execute();
@@ -176,17 +182,24 @@ if (($_SERVER["REQUEST_METHOD"] === "POST" && validarLogin($pdo)) || $_SERVER["R
                         echo json_encode($resp);
                         exit;
                     }
-                } else if (isset($_POST["ultimoID_do"])) {
+                }
+                //pegar o id da ultima mensagem
+                else if (isset($_POST["ultimoID_do"]) && isset($_POST["tipo"])) {
 
                     try {
                         $ultimoID = $_POST["ultimoID_do"];
-                        $sql = "SELECT tm." . MENSAGENS_ATTB_ID . " FROM " . TB_MENSAGENS . " tm WHERE tm." . MENSAGENS_ATTB_DE . " =:id_mensagem OR tm." . MENSAGENS_ATTB_PARA . " =:id_mensagem ORDER BY tm." . MENSAGENS_ATTB_ID . " DESC LIMIT 1";
+                        $sql = "SELECT tm." . MENSAGENS_ATTB_ID . " as MENSAGENS_ATTB_ID FROM " . TB_MENSAGENS . " tm WHERE tm." . MENSAGENS_ATTB_DE . " =:id_mensagem OR tm." . MENSAGENS_ATTB_PARA . " =:id_mensagem ORDER BY tm." . MENSAGENS_ATTB_ID . " DESC LIMIT 1";
+
+                        if ($_POST["tipo"] == 2) {
+                            $sql = "SELECT tm." . MENSAGENS_USER_GRUPO_ATTB_ID . " as MENSAGENS_ATTB_ID FROM " . TB_MENSAGENS_USER_GRUPO . " tm WHERE tm." . MENSAGENS_USER_GRUPO_ATTB_GRUPO . "=:id_mensagem ORDER BY tm." . MENSAGENS_USER_GRUPO_ATTB_ID . " DESC LIMIT 1";
+                        }
+
                         $stmt = $pdo->prepare($sql);
                         $stmt->bindParam(':id_mensagem', $ultimoID, PDO::PARAM_INT);
                         if ($stmt->execute()) {
                             if ($stmt->rowCount() > 0) {
                                 $resp["status"] = "success";
-                                $resp["ultimoID"] = $stmt->fetch(PDO::FETCH_ASSOC)[MENSAGENS_ATTB_ID];
+                                $resp["ultimoID"] = $stmt->fetch(PDO::FETCH_ASSOC)["MENSAGENS_ATTB_ID"];
                             } else {
                                 $resp["status"] = "error";
                             }
