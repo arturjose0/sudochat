@@ -66,6 +66,7 @@ echo <<<HTML
     </button>
   </form>
 </div>
+<!-- 
 <div class="recursos_conter">
   <div class="topo">
     <button title="ocultar" class="btn-back" id="btn-back" onclick="abrirmenumsg()">
@@ -196,6 +197,6 @@ echo <<<HTML
       </li>
     </ul>
   </div>
-</div>
+</div> -->
 
 HTML;
