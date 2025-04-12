@@ -1411,6 +1411,7 @@ function verificarSessao() {
             location.href = "../";
          } else if (data.status != "success" && content) {
             location.href = "login";
+            // alert(data.msg);
          } else if (data.status === "success" && content) {
             LOGADO = data.SUDOCHAT_SESSAO_ID;
             if (nnome = document.getElementById("logado")) {

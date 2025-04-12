@@ -1482,7 +1482,7 @@ ORDER BY
                 $stmt->bindParam(':tempo', $tempo, PDO::PARAM_STR);
                 $stmt->bindParam(':id', $id, PDO::PARAM_INT);
                 $stmt->bindParam(':user', $user, PDO::PARAM_INT);
-                if ($stmt->execute() && $stmt->rowCount() > 0) {
+                if ($stmt->execute()) {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
                     $resp['SUDOCHAT_SESSAO_ID'] = $user;
                     $resp['SUDOCHAT_SESSAO_NOME'] = decriptografar($_SESSION['USER_ATTB_NOME']);
@@ -1490,22 +1490,34 @@ ORDER BY
                     $resp["status"] = "success";
                 } else {
                     // Destroi a sessão
+                    $resp["status"] = "error";
+                    $resp["msg"] = "Sem sessao";
+                }
+            } else {
+                $resp["status"] = "error";
+                $resp["msg"] = "Sem sessao";
+            }
+
+
+            // $resp["status"] = isset($resp["status"]) ? $resp["status"] : "error";
+        } catch (Exception $e) {
+            $resp["status"] = "error";
+            $resp["msg"] = $e;
+            // Destroi a sessão
+            // session_unset(); // Remove todas as variáveis da sessão
+            // session_destroy(); // Destroi a sessão completamente
+        } finally {
+            if (!isset($resp["status"]) && $resp["status"] == "error") {
+                $resp["status"] = "error";
+                $resp["msg"] = "Sem sessao";
+                $stmt = $pdo->prepare("UPDATE " . TB_SESSOES . "  SET " . SESSOES_ATTB_ESTADO . " = 0 WHERE " . SESSOES_ATTB_ESTADO . "=1 AND " . SESSOES_ATTB_TEMPO . "<NOW() ");
+                if ($stmt->execute()) {
+
                     session_unset(); // Remove todas as variáveis da sessão
                     session_destroy(); // Destroi a sessão completamente
                 }
             }
 
-            $stmt = $pdo->prepare("UPDATE " . TB_SESSOES . "  SET " . SESSOES_ATTB_ESTADO . " = 0 WHERE " . SESSOES_ATTB_ESTADO . "=1 AND " . SESSOES_ATTB_TEMPO . "<NOW() ");
-            $stmt->execute();
-
-            $resp["status"] = isset($resp["status"]) ? $resp["status"] : "error";
-        } catch (Exception $e) {
-            $resp["status"] = "error";
-            $resp["msg"] = $e;
-            // Destroi a sessão
-            session_unset(); // Remove todas as variáveis da sessão
-            session_destroy(); // Destroi a sessão completamente
-        } finally {
             echo json_encode($resp);
             exit;
         }

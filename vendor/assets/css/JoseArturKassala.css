@@ -276,6 +276,12 @@ button {
               max-width: 70%;
             }
 
+            .texto:hover {
+              .delete-message-btn {
+                display: block;
+              }
+            }
+
             .datahora {
               font-size: 10px;
               margin: 5px;
@@ -838,6 +844,7 @@ button {
   cursor: pointer;
   font-size: 12px;
   transition: background-color 0.3s;
+  display: none;
 }
 
 .delete-message-btn:hover {
@@ -934,31 +941,39 @@ button {
     }
   }
 }
+
 .principal-hide {
   display: grid;
-  grid-template-columns: 3em 3em 1fr;
+  grid-template-areas:
+    "listas mensagens"
+    "listas ferramentas";
+  grid-template-columns: 3em 1fr; /* Two columns: 3em for listas, 1fr for mensagens/ferramentas */
+  grid-template-rows: 1fr 3em; /* Two rows: 1fr for mensagens, 3em for ferramentas */
   height: 100vh;
   width: 100vw;
 
   .ferramentas {
     border: 2px solid #edf0f6;
     display: flex;
-    flex-direction: column;
+    /* flex-direction: column; */
     justify-content: space-between;
     align-items: center;
     padding: 0.5em;
-    height: 100vh;
+    grid-area: ferramentas; /* Removed height: 100vh to let the grid row define the height */
     .avatar {
       text-align: center;
       img {
         width: 35px;
-        /* height: 90%; */
         border-radius: 50%;
+      }
+
+      b {
+        display: none;
       }
     }
 
     ul {
-      display: grid;
+      display: flex;
       gap: 0.7em;
     }
   }
@@ -967,7 +982,7 @@ button {
     display: grid;
     grid-template-rows: 4em 2.7em 3em 1fr;
     padding: 7px;
-
+    grid-area: listas;
     .topo {
       border-bottom: 1px solid #edf0f6;
       display: flex;
@@ -996,16 +1011,13 @@ button {
     }
 
     .pesquisar {
-      /* border: 1px solid #edf0f6; */
       padding: 4px;
 
       form {
         background-color: #eff3f6;
-        /* border: 1px solid black; */
         height: 100%;
         width: 100%;
         display: flex;
-        /* grid-template-columns: 1fr 3em; */
         border-radius: 12px;
         padding: 10px;
         align-items: center;
@@ -1029,7 +1041,6 @@ button {
     }
 
     .meio {
-      /* border-bottom: 1px solid #edf0f6; */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -1061,7 +1072,7 @@ button {
       flex-direction: column;
       gap: 0.2em;
       max-height: calc(100vh - 11em);
-      overflow-y: auto; /* Adiciona barra de rolagem vertical quando necessário */
+      overflow-y: auto;
 
       .mensagem:hover {
         background-color: #edf0f6;
@@ -1075,12 +1086,8 @@ button {
         display: flex;
         justify-content: center;
         align-items: center;
-        /* grid-template-columns: auto 1fr auto; */
-        /* height: 70px; */
         border-radius: 7px;
         padding: 0.2em;
-        /* align-items: center; */
-        /* justify-content: left; */
 
         .dois {
           margin-left: 10px;
@@ -1104,7 +1111,6 @@ button {
         }
 
         span {
-          /* border-left: 2px solid #edf0f6; */
           font-size: 0.8em;
           color: #a1a1a1;
           height: 100%;
@@ -1119,31 +1125,24 @@ button {
 
   .mensagens {
     display: grid;
-    /* grid-template-columns: 1fr 3.3em; */
-    /* grid-template-columns: 1fr 15em; */
     background-color: #edf0f6;
     border-radius: 12px;
     margin: 12px;
-
+    grid-area: mensagens;
     .conteudos {
       background-color: #edf0f6;
       display: grid;
       grid-template-rows: 1fr 3em;
       border-radius: 10px;
       padding: 12px;
-      /* border: 1px solid red; */
 
       .conteudo {
-        max-height: calc(
-          100vh - 7em
-        ); /* Define a altura máxima antes de ativar a rolagem */
-        overflow-y: auto; /* Habilita a rolagem vertical quando necessário */
+        max-height: calc(100vh - 7em);
+        overflow-y: auto;
         display: flex;
-        flex-direction: column; /* Garantir que o conteúdo fique empilhado de forma vertical */
+        flex-direction: column;
 
         .caixa {
-          /* border: 1px solid; */
-
           .receptor,
           .emissor {
             display: flex;
@@ -1151,7 +1150,6 @@ button {
             gap: 5px;
 
             .texto {
-              /* border: 1px solid; */
               max-width: 70%;
             }
 
@@ -1165,31 +1163,28 @@ button {
               background-color: #fff;
               border-radius: 20px;
               position: relative;
-              box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Sombras suaves para o balão */
-              max-width: 100%; /* Limita a largura para dar um efeito mais de "balão" */
-              margin: 10px 0; /* Espaçamento entre as mensagens */
-              font-size: 16px; /* Tamanho da fonte */
+              box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+              max-width: 100%;
+              margin: 10px 0;
+              font-size: 16px;
               line-height: 1.4;
             }
 
             .msg::after {
               content: "";
               position: absolute;
-              bottom: -10px; /* Coloca a seta logo abaixo do balão */
-              left: 0; /* Posiciona a seta no canto inferior esquerdo */
-              transform: translateX(
-                -50%
-              ); /* Garante que a seta esteja no centro exato */
+              bottom: -10px;
+              left: 0;
+              transform: translateX(-50%);
               width: 0;
               height: 0;
-              border-left: 10px solid transparent; /* Bordas para criar o triângulo */
-              border-right: 10px solid transparent; /* Bordas para criar o triângulo */
-              border-top: 10px solid #fff; /* Cor da seta (mesma cor do balão) */
+              border-left: 10px solid transparent;
+              border-right: 10px solid transparent;
+              border-top: 10px solid #fff;
             }
           }
 
           .emissor {
-            /* justify-self: end; */
             display: flex;
             justify-content: end;
             .msg {
@@ -1197,10 +1192,10 @@ button {
               background-color: #ced2e3;
               border-radius: 20px;
               position: relative;
-              box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Sombras suaves para o balão */
-              max-width: 100%; /* Limita a largura para dar um efeito mais de "balão" */
-              margin: 10px 0; /* Espaçamento entre as mensagens */
-              font-size: 16px; /* Tamanho da fonte */
+              box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+              max-width: 100%;
+              margin: 10px 0;
+              font-size: 16px;
               line-height: 1.4;
             }
 
@@ -1219,10 +1214,7 @@ button {
 
       form {
         display: flex;
-        /* grid-template-columns: auto 40px 40px; */
         padding: 0.4em;
-        /* justify-content: center; */
-        /* border: 1px solid; */
         border-radius: 12px;
         background-color: #fff;
         align-items: center;
@@ -1258,20 +1250,15 @@ button {
 
     .recursos {
       background-color: #fff;
-      /* border: 1px solid; */
       display: grid;
       grid-template-rows: 3em auto 1fr;
-      /* flex-direction: column; */
-      /* justify-content: space-between; */
       padding: 0.6em;
 
       .avatar {
-        /* border: 1px solid; */
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        text-align: center;
         text-align: center;
         p {
           color: #a1a1a4;
