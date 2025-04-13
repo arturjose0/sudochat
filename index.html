@@ -166,9 +166,9 @@
           <span>SudoChat</span>
         </div>
         <div class="pesquisar">
-          <form action="#">
+          <form onsubmit="event.preventDefault()">
             <input type="search" placeholder="Pesquisar" id="pesquisar" />
-            <button type="submit" title="pesquisar">
+            <button type="button" title="pesquisar" id="btn_pesquisar">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"

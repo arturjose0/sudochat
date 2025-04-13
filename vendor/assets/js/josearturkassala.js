@@ -13,9 +13,9 @@ let tipoA = 1;
 let listaUsuarios = [];
 
 if (menu_btn = document.getElementById("menu-acao")) {
-   menu_btn.addEventListener('click', () => {
+   if (principal = document.getElementById("principal")) {
+      menu_btn.addEventListener('click', () => {
 
-      if (principal = document.getElementById("principal")) {
          if (principal.classList.contains("principal")) {
             principal.classList.remove("principal");
             principal.classList.add("principal-hide");
@@ -23,10 +23,28 @@ if (menu_btn = document.getElementById("menu-acao")) {
             principal.classList.remove("principal-hide");
             principal.classList.add("principal");
          }
+      });
+
+      if (btn_pesquisar = document.getElementById("btn_pesquisar")) {
+         btn_pesquisar.addEventListener('click', () => {
+            if (principal.classList.contains("principal-hide")) {
+               principal.classList.remove("principal-hide");
+               principal.classList.add("principal");
+               document.getElementById("pesquisar").focus();
+            }
+         });
       }
-   });
+   }
 }
 
+if (principal.classList.contains("principal-hide")) {
+   if (btn_pesquisar = document.getElementById("btn_pesquisar")) {
+      btn_pesquisar.addEventListener('click', () => {
+         principal.classList.remove("principal-hide");
+         principal.classList.add("principal");
+      });
+   }
+}
 
 function abrirmenumsg() {
    let elemento = document.querySelector(".recursos_conter") || document.querySelector(".recursos");
@@ -95,17 +113,7 @@ function carregarListaUsuarios(tipo) {
             // Limpa o container e renderiza os novos dados
             container.innerHTML = "";
             renderizarUsuarios(container, tipoA);
-            // if (tipoA == tipo) {
-            //    if (userActivo > 0) {
-            //       if (elemento = document.getElementById("u_" + userActivo)) {
-            //          if (!elemento.classList.contains("activo")) {
-            //             elemento.classList.add("activo"); // Usa 'this' para referenciar o <a> clicado
-            //          }
-            //       }
-            //    }
-            // } else {
-            //    tipoA = tipo;
-            // }
+
          } else {
             // console.log("Nenhuma mudança detectada nos dados.");
          }
@@ -167,6 +175,10 @@ function renderizarUsuarios(container, tipo) {
          removerClasseActivo();
          userActivo = user.USER_ATTB_ID;
          this.classList.add("activo");
+         if (principal.classList.contains("principal") && window.innerWidth < 600) {
+            principal.classList.remove("principal");
+            principal.classList.add("principal-hide");
+         }
       });
 
       container.appendChild(userElement);
@@ -439,6 +451,22 @@ function carregarMensagens(para) {
                const isApagada = msg.MENSAGENS_ATTB_APAGADA == 1;
                const apagadaPor = msg.APAGADA_POR_NOME || "Desconhecido";
 
+               testeaa = "";
+
+               if (isApagada) {
+                  testeaa = `
+                  <div style="background-color: #edf0f6; color: #a1a1aa">
+                                 Mensagem apagada por ${apagadaPor}
+                              </div>
+                  `;
+               } else if (msg.MENSAGENS_ATTB_MSG != null && msg.MENSAGENS_ATTB_MSG && msg.MENSAGENS_ATTB_MSG.trim().length > 0) {
+                  testeaa = `
+                  <div class= "msg">
+                                 ${msg.MENSAGENS_ATTB_MSG}
+                              </div>
+                  `;
+               }
+
                if (msg.MENSAGENS_ATTB_DE == Number(LOGADO)) {
                   // Mensagem enviada pelo usuário logado (emissor)
                   div.innerHTML = `
@@ -448,9 +476,7 @@ function carregarMensagens(para) {
                               <div class="datahora" title='data e hora de envio'>
                                  ${msg.MENSAGENS_ATTB_CRIADO_AOS}
                               </div>
-                              <div ${isApagada ? 'style="background-color: #edf0f6; color: #a1a1aa"' : 'class= "msg"'}>
-                                 ${isApagada ? `Mensagem apagada por ${apagadaPor}` : (msg.MENSAGENS_ATTB_MSG || '')}
-                              </div>
+                              ${testeaa}
                               ${isApagada ? '' : renderizarAnexos(msg.ANEXOS)}
                               ${canDelete ? `<button class="delete-message-btn" data-mensagem-id="${msg.MENSAGENS_ATTB_ID}">Apagar Mensagem</button>` : ''}
                            </div>
@@ -467,9 +493,7 @@ function carregarMensagens(para) {
                               <div class="datahora" title='data e hora de envio'>
                                  <b>${tipoA == 2 ? msg.USER_ATTB_NOME : ''}</b>
                               </div>
-                              <div  ${isApagada ? 'style="background-color: #edf0f6; color: #a1a1aa"' : 'class= "msg"'}>
-                                 ${isApagada ? `Mensagem apagada por ${apagadaPor}` : (msg.MENSAGENS_ATTB_MSG || '')}
-                              </div>
+                              ${testeaa}
                               ${isApagada ? '' : renderizarAnexos(msg.ANEXOS)}
                               ${canDelete ? `<button class="delete-message-btn" data-mensagem-id="${msg.MENSAGENS_ATTB_ID}">Apagar Mensagem</button>` : ''}
                               <div class="datahora" title='data e hora de envio'>
@@ -640,696 +664,6 @@ function apagarMensagem(mensagemId, tipo) {
          console.error("Erro ao apagar mensagem:", error);
       });
 }
-
-// function carregarMensagens(para) {
-//    if (document.getElementById("conteudo")) {
-//       fetch("vendor/backend/sudomake.php", {
-//          method: "POST",
-//          headers: {
-//             "Content-Type": "application/x-www-form-urlencoded",
-//          },
-//          body: `para=${encodeURIComponent(para)}&ultimo_id=${encodeURIComponent(ultimoId)}&tipo=${tipoA}`
-//       })
-//          .then(response => response.json())
-//          .then(mensagens => {
-//             const conteudo = document.getElementById("conteudo");
-
-//             mensagens.forEach(msg => {
-//                const div = document.createElement("div");
-//                div.classList.add("caixa");
-//                div.setAttribute('data-mensagem-id', msg.MENSAGENS_ATTB_ID); // Adiciona o ID da mensagem para exclusão
-
-//                // Função para renderizar os anexos
-//                const renderizarAnexos = (anexos) => {
-//                   if (!anexos || anexos.length === 0) return '';
-
-//                   let html = '<div class="anexos">';
-//                   anexos.forEach(anexo => {
-//                      const caminho = anexo.caminho;
-//                      const nomeOriginal = anexo.nome_original;
-//                      const caminhoCompleto = `vendor/${caminho}`;
-
-//                      const extensao = caminho.split('.').pop().toLowerCase();
-//                      const extensoesImagens = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-//                      const extensoesMusicas = ['mp3', 'aac', 'm4a', 'ogg', 'flac', 'wav', 'opus'];
-//                      const extensoesVideos = ['mp4', 'webm', 'mov', 'm4v'];
-//                      const extensoesExcel = ['xlsx', 'xls', 'xlsm', 'xlsb', 'xltx', 'xltm', 'csv'];
-//                      const extensoesWord = ['docx', 'doc', 'docm', 'dotx', 'dotm', 'rtf'];
-//                      const extensoesPowerPoint = ['pptx', 'ppt', 'pptm', 'potx', 'potm', 'ppsx', 'ppsm', 'pps'];
-
-//                      let imgdefault = "vendor/assets/img/";
-//                      switch (extensao) {
-//                         case "pdf":
-//                            imgdefault += "PDF.png";
-//                            break;
-//                         case "7z":
-//                            imgdefault += "7zip.png";
-//                            break;
-//                         case "rar":
-//                            imgdefault += "RAR.png";
-//                            break;
-//                         case "zip":
-//                            imgdefault += "Archive Folder.png";
-//                            break;
-//                         default:
-//                            if (extensoesMusicas.includes(extensao)) {
-//                               imgdefault += "Music.png";
-//                            } else if (extensoesVideos.includes(extensao)) {
-//                               imgdefault += "Google Play Movies And Tv.png";
-//                            } else if (extensoesExcel.includes(extensao)) {
-//                               imgdefault += "Microsoft Excel 2019.png";
-//                            } else if (extensoesWord.includes(extensao)) {
-//                               imgdefault += "Microsoft Word 2019.png";
-//                            } else if (extensoesPowerPoint.includes(extensao)) {
-//                               imgdefault += "Microsoft PowerPoint 2019.png";
-//                            } else {
-//                               imgdefault += "Archive Folder.png";
-//                            }
-//                      }
-
-//                      if (extensoesImagens.includes(extensao)) {
-//                         html += `
-//                            <div class="anexo-item">
-//                               <a href="#" class="anexo-link open-modal" data-src="${caminhoCompleto}" data-nome="${nomeOriginal}">
-//                                  <img src="${caminhoCompleto}" alt="Anexo" class="anexo-imagem">
-//                               </a>
-//                               <div class="anexo-caption">${nomeOriginal}</div>
-//                            </div>
-//                         `;
-//                      } else if (extensoesMusicas.includes(extensao)) {
-//                         html += `
-//                            <div class="anexo-item">
-//                               <audio controls class="anexo-audio" preload="none">
-//                                  <source src="${caminhoCompleto}" type="audio/${extensao === 'm4a' ? 'mpeg' : extensao}">
-//                                  Seu navegador não suporta o elemento de áudio.
-//                               </audio>
-//                               <div class="anexo-caption">${nomeOriginal}</div>
-//                            </div>
-//                         `;
-//                      } else if (extensoesVideos.includes(extensao)) {
-//                         html += `
-//                            <div class="anexo-item">
-//                               <video controls class="anexo-video" preload="none">
-//                                  <source src="${caminhoCompleto}" type="video/${extensao}">
-//                                  Seu navegador não suporta o elemento de vídeo.
-//                               </video>
-//                               <div class="anexo-caption">${nomeOriginal}</div>
-//                            </div>
-//                         `;
-//                      } else {
-//                         html += `
-//                            <div class="anexo-item">
-//                               <a href="${caminhoCompleto}" class="anexo-link" download="${nomeOriginal}.${extensao}">
-//                                  <img src="${imgdefault}" alt="Anexo" class="anexo-imagem">
-//                               </a>
-//                               <div class="anexo-caption">${nomeOriginal}</div>
-//                            </div>
-//                         `;
-//                      }
-//                   });
-//                   html += '</div>';
-//                   return html;
-//                };
-
-//                // Verifica se o usuário pode apagar a mensagem
-//                const isEmissor = msg.MENSAGENS_ATTB_DE == Number(LOGADO);
-//                const isAdmin = tipoA == 2 && msg.ADMINS && msg.ADMINS.includes(Number(LOGADO));
-//                const canDelete = isEmissor || isAdmin;
-
-//                if (msg.MENSAGENS_ATTB_DE == Number(LOGADO)) {
-//                   // Mensagem enviada pelo usuário logado (emissor)
-//                   div.innerHTML = `
-//                      <div class="caixa">
-//                         <div class="emissor">
-//                            <div class="texto">
-//                               <div class="datahora" title='data e hora de envio'>
-//                                  ${msg.MENSAGENS_ATTB_CRIADO_AOS}
-//                               </div>
-//                               <div class="msg">
-//                                  ${msg.MENSAGENS_ATTB_MSG || ''}
-//                               </div>
-//                               ${renderizarAnexos(msg.ANEXOS)}
-//                               ${canDelete ? `<button class="delete-message-btn" data-mensagem-id="${msg.MENSAGENS_ATTB_ID}">Apagar Mensagem</button>` : ''}
-//                            </div>
-//                         </div>
-//                      </div>
-//                   `;
-//                } else {
-//                   // Mensagem recebida de outro usuário (receptor)
-//                   div.innerHTML = `
-//                      <div class="caixa">
-//                         <div class="receptor">
-//                            <img class='receptor-img' src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?t=st=1743555705~exp=1743559305~hmac=fb04ae28a8512fe8af76eb993e6dea68c3de7e38691ed699887af3a51666ca34&w=740" alt="">
-//                            <div class="texto">
-//                               <div class="datahora" title='data e hora de envio'>
-//                                  <b>${tipoA == 2 ? msg.USER_ATTB_NOME : ''}</b>
-//                               </div>
-//                               <div class="msg">
-//                                  ${msg.MENSAGENS_ATTB_MSG || ''}
-//                               </div>
-//                               ${renderizarAnexos(msg.ANEXOS)}
-//                               ${canDelete ? `<button class="delete-message-btn" data-mensagem-id="${msg.MENSAGENS_ATTB_ID}">Apagar Mensagem</button>` : ''}
-//                               <div class="datahora" title='data e hora de envio'>
-//                                  ${msg.MENSAGENS_ATTB_CRIADO_AOS}
-//                               </div>
-//                            </div>
-//                         </div>
-//                      </div>
-//                   `;
-//                }
-
-//                conteudo.appendChild(div);
-
-//                ultimoId = Number(msg.MENSAGENS_ATTB_ID); // Atualiza último ID
-
-//                document.getElementById("conteudo").scrollTop = conteudo.scrollHeight;
-//             });
-
-//             // Adiciona o evento para abrir o modal ao clicar nas imagens
-//             document.querySelectorAll('.open-modal').forEach(link => {
-//                link.addEventListener('click', (e) => {
-//                   e.preventDefault();
-//                   const src = link.getAttribute('data-src');
-//                   const nome = link.getAttribute('data-nome');
-//                   abrirModal(src, nome);
-//                });
-//             });
-
-//             // Adiciona o evento para apagar mensagens
-//             document.querySelectorAll('.delete-message-btn').forEach(button => {
-//                button.addEventListener('click', (e) => {
-//                   const mensagemId = button.getAttribute('data-mensagem-id');
-//                   apagarMensagem(mensagemId, tipoA);
-//                });
-//             });
-//          })
-//          .catch(error => {
-//             mostrarAlert("Erro ao carregar mensagens: " + error);
-//             console.error("Erro ao carregar mensagens:", error);
-//          });
-//    }
-// }
-
-// // Função para abrir o modal com a imagem
-// function abrirModal(src, nome) {
-//    let modal = document.getElementById('image-modal');
-//    if (!modal) {
-//       modal = document.createElement('div');
-//       modal.id = 'image-modal';
-//       modal.className = 'modal';
-//       modal.innerHTML = `
-//          <div class="modal-content">
-//             <span class="modal-close">×</span>
-//             <img id="modal-image" src="" alt="Imagem Ampliada">
-//             <div class="modal-caption"></div>
-//             <a id="modal-download" href="" download class="modal-download-btn">Baixar Imagem</a>
-//          </div>
-//       `;
-//       document.body.appendChild(modal);
-//    }
-
-//    const modalImage = document.getElementById('modal-image');
-//    const modalCaption = modal.querySelector('.modal-caption');
-//    const modalDownload = document.getElementById('modal-download');
-
-//    modalImage.src = src;
-//    modalCaption.textContent = nome;
-//    modalDownload.href = src;
-//    modalDownload.download = `${nome}.${src.split('.').pop().toLowerCase()}`;
-
-//    modal.style.display = 'flex';
-
-//    modal.querySelector('.modal-close').addEventListener('click', () => {
-//       modal.style.display = 'none';
-//    });
-
-//    modal.addEventListener('click', (e) => {
-//       if (e.target === modal) {
-//          modal.style.display = 'none';
-//       }
-//    });
-// }
-
-// // Função para apagar mensagem
-// function apagarMensagem(mensagemId, tipo) {
-//    if (confirm("Tem certeza que deseja apagar esta mensagem?")) {
-//       fetch("vendor/backend/sudomake.php", {
-//          method: "POST",
-//          headers: {
-//             "Content-Type": "application/x-www-form-urlencoded",
-//          },
-//          body: `acao=apagar_mensagem&mensagem_id=${encodeURIComponent(mensagemId)}&tipo=${encodeURIComponent(tipo)}`
-//       })
-//          .then(response => response.json())
-//          .then(data => {
-//             if (data.status === "success") {
-//                // Remove a mensagem da interface
-//                const mensagemDiv = document.querySelector(`.caixa[data-mensagem-id="${mensagemId}"]`);
-//                if (mensagemDiv) {
-//                   mensagemDiv.remove();
-//                }
-//                mostrarAlert(data.msg);
-//             } else {
-//                mostrarAlert(data.msg);
-//             }
-//          })
-//          .catch(error => {
-//             mostrarAlert("Erro ao apagar mensagem: " + error);
-//             console.error("Erro ao apagar mensagem:", error);
-//          });
-//    }
-// }
-
-// function carregarMensagens(para) {
-//    if (document.getElementById("conteudo")) {
-//       fetch("vendor/backend/sudomake.php", {
-//          method: "POST",
-//          headers: {
-//             "Content-Type": "application/x-www-form-urlencoded",
-//          },
-//          body: `para=${encodeURIComponent(para)}&ultimo_id=${encodeURIComponent(ultimoId)}&tipo=${tipoA}`
-//       })
-//          .then(response => response.json())
-//          .then(mensagens => {
-//             const conteudo = document.getElementById("conteudo");
-
-//             mensagens.forEach(msg => {
-//                const div = document.createElement("div");
-//                div.classList.add("caixa");
-
-//                // Função para renderizar os anexos
-//                const renderizarAnexos = (anexos) => {
-//                   if (!anexos || anexos.length === 0) return '';
-
-//                   let html = '<div class="anexos">';
-//                   anexos.forEach(anexo => {
-//                      // Extrai o caminho e o nome original do anexo
-//                      const caminho = anexo.caminho;
-//                      const nomeOriginal = anexo.nome_original;
-
-//                      // Adiciona o prefixo "vendor/" ao caminho do anexo
-//                      const caminhoCompleto = `vendor/${caminho}`;
-
-//                      // Verifica a extensão do arquivo
-//                      const extensao = caminho.split('.').pop().toLowerCase();
-//                      const extensoesImagens = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-//                      const extensoesMusicas = ['mp3', 'aac', 'm4a', 'ogg', 'flac', 'wav', 'opus'];
-//                      const extensoesVideos = ['mp4', 'webm', 'mov', 'm4v'];
-//                      const extensoesExcel = ['xlsx', 'xls', 'xlsm', 'xlsb', 'xltx', 'xltm', 'csv'];
-//                      const extensoesWord = ['docx', 'doc', 'docm', 'dotx', 'dotm', 'rtf'];
-//                      const extensoesPowerPoint = ['pptx', 'ppt', 'pptm', 'potx', 'potm', 'ppsx', 'ppsm', 'pps'];
-
-//                      // Define o ícone com base na extensão
-//                      let imgdefault = "vendor/assets/img/";
-//                      switch (extensao) {
-//                         case "pdf":
-//                            imgdefault += "PDF.png";
-//                            break;
-//                         case "7z":
-//                            imgdefault += "7zip.png";
-//                            break;
-//                         case "rar":
-//                            imgdefault += "RAR.png";
-//                            break;
-//                         case "zip":
-//                            imgdefault += "Archive Folder.png";
-//                            break;
-//                         default:
-//                            if (extensoesMusicas.includes(extensao)) {
-//                               imgdefault += "Music.png";
-//                            } else if (extensoesVideos.includes(extensao)) {
-//                               imgdefault += "Google Play Movies And Tv.png";
-//                            } else if (extensoesExcel.includes(extensao)) {
-//                               imgdefault += "Microsoft Excel 2019.png";
-//                            } else if (extensoesWord.includes(extensao)) {
-//                               imgdefault += "Microsoft Word 2019.png";
-//                            } else if (extensoesPowerPoint.includes(extensao)) {
-//                               imgdefault += "Microsoft PowerPoint 2019.png";
-//                            } else {
-//                               imgdefault += "Archive Folder.png";
-//                            }
-//                      }
-
-//                      if (extensoesImagens.includes(extensao)) {
-//                         // Se for uma imagem, exibe com um link que abre o modal
-//                         html += `
-//                            <div class="anexo-item">
-//                               <a href="#" class="anexo-link open-modal" data-src="${caminhoCompleto}" data-nome="${nomeOriginal}">
-//                                  <img src="${caminhoCompleto}" alt="Anexo" class="anexo-imagem">
-//                               </a>
-//                               <div class="anexo-caption">${nomeOriginal}</div>
-//                            </div>
-//                         `;
-//                      } else if (extensoesMusicas.includes(extensao)) {
-//                         // Se for um arquivo de música, exibe um player de áudio com preload="none"
-//                         html += `
-//                            <div class="anexo-item">
-//                               <audio controls class="anexo-audio" preload="none">
-//                                  <source src="${caminhoCompleto}" type="audio/${extensao === 'm4a' ? 'mpeg' : extensao}">
-//                                  Seu navegador não suporta o elemento de áudio.
-//                               </audio>
-//                               <div class="anexo-caption">${nomeOriginal}</div>
-//                            </div>
-//                         `;
-//                      } else if (extensoesVideos.includes(extensao)) {
-//                         // Se for um vídeo, exibe um player de vídeo com preload="none"
-//                         html += `
-//                            <div class="anexo-item">
-//                               <video controls class="anexo-video" preload="none">
-//                                  <source src="${caminhoCompleto}" type="video/${extensao}">
-//                                  Seu navegador não suporta o elemento de vídeo.
-//                               </video>
-//                               <div class="anexo-caption">${nomeOriginal}</div>
-//                            </div>
-//                         `;
-//                      } else {
-//                         // Se for outro tipo de arquivo, exibe como um link com ícone e força o download
-//                         html += `
-//                            <div class="anexo-item">
-//                               <a href="${caminhoCompleto}" class="anexo-link" download="${nomeOriginal}.${extensao}">
-//                                  <img src="${imgdefault}" alt="Anexo" class="anexo-imagem">
-//                               </a>
-//                               <div class="anexo-caption">${nomeOriginal}</div>
-//                            </div>
-//                         `;
-//                      }
-//                   });
-//                   html += '</div>';
-//                   return html;
-//                };
-
-//                if (msg.MENSAGENS_ATTB_DE == Number(LOGADO)) {
-//                   // Mensagem enviada pelo usuário logado (emissor)
-//                   div.innerHTML = `
-//                      <div class="caixa">
-//                         <div class="emissor">
-//                            <div class="texto">
-//                               <div class="datahora" title='data e hora de envio'>
-//                                  ${msg.MENSAGENS_ATTB_CRIADO_AOS}
-//                               </div>
-//                               <div class="msg">
-//                                  ${msg.MENSAGENS_ATTB_MSG || ''}
-//                               </div>
-//                               ${renderizarAnexos(msg.ANEXOS)}
-//                            </div>
-//                         </div>
-//                      </div>
-//                   `;
-//                } else {
-//                   // Mensagem recebida de outro usuário (receptor)
-//                   div.innerHTML = `
-//                      <div class="caixa">
-//                         <div class="receptor">
-//                            <img class='receptor-img' src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?t=st=1743555705~exp=1743559305~hmac=fb04ae28a8512fe8af76eb993e6dea68c3de7e38691ed699887af3a51666ca34&w=740" alt="">
-//                            <div class="texto">
-//                               <div class="datahora" title='data e hora de envio'>
-//                                  <b>${tipoA == 2 ? msg.USER_ATTB_NOME : ''}</b>
-//                               </div>
-//                               <div class="msg">
-//                                  ${msg.MENSAGENS_ATTB_MSG || ''}
-//                               </div>
-//                               ${renderizarAnexos(msg.ANEXOS)}
-//                               <div class="datahora" title='data e hora de envio'>
-//                                  ${msg.MENSAGENS_ATTB_CRIADO_AOS}
-//                               </div>
-//                            </div>
-//                         </div>
-//                      </div>
-//                   `;
-//                }
-
-//                conteudo.appendChild(div);
-
-//                ultimoId = Number(msg.MENSAGENS_ATTB_ID); // Atualiza último ID
-
-//                document.getElementById("conteudo").scrollTop = conteudo.scrollHeight;
-//             });
-
-//             // Adiciona o evento para abrir o modal ao clicar nas imagens
-//             document.querySelectorAll('.open-modal').forEach(link => {
-//                link.addEventListener('click', (e) => {
-//                   e.preventDefault();
-//                   const src = link.getAttribute('data-src');
-//                   const nome = link.getAttribute('data-nome');
-//                   abrirModal(src, nome);
-//                });
-//             });
-//          })
-//          .catch(error => {
-//             mostrarAlert("Erro ao carregar mensagens: " + error);
-//             console.error("Erro ao carregar mensagens:", error);
-//          });
-//    }
-// }
-
-// // Função para abrir o modal com a imagem
-// function abrirModal(src, nome) {
-//    // Cria o modal se ele ainda não existe
-//    let modal = document.getElementById('image-modal');
-//    if (!modal) {
-//       modal = document.createElement('div');
-//       modal.id = 'image-modal';
-//       modal.className = 'modal';
-//       modal.innerHTML = `
-//          <div class="modal-content">
-//             <span class="modal-close">&times;</span>
-//             <img id="modal-image" src="" alt="Imagem Ampliada">
-//             <div class="modal-caption"></div>
-//             <a id="modal-download" href="" download class="modal-download-btn">Baixar Imagem</a>
-//          </div>
-//       `;
-//       document.body.appendChild(modal);
-//    }
-
-//    // Atualiza o conteúdo do modal
-//    const modalImage = document.getElementById('modal-image');
-//    const modalCaption = modal.querySelector('.modal-caption');
-//    const modalDownload = document.getElementById('modal-download');
-
-//    modalImage.src = src;
-//    modalCaption.textContent = nome;
-//    modalDownload.href = src;
-//    modalDownload.download = `${nome}.${src.split('.').pop().toLowerCase()}`; // Adiciona o nome original com a extensão
-
-//    // Exibe o modal
-//    modal.style.display = 'flex';
-
-//    // Fecha o modal ao clicar no botão de fechar
-//    modal.querySelector('.modal-close').addEventListener('click', () => {
-//       modal.style.display = 'none';
-//    });
-
-//    // Fecha o modal ao clicar fora da imagem
-//    modal.addEventListener('click', (e) => {
-//       if (e.target === modal) {
-//          modal.style.display = 'none';
-//       }
-//    });
-// }
-
-// function carregarMensagens(para) {
-//    if (document.getElementById("conteudo")) {
-//       fetch("vendor/backend/sudomake.php", {
-//          method: "POST",
-//          headers: {
-//             "Content-Type": "application/x-www-form-urlencoded",
-//          },
-//          body: `para=${encodeURIComponent(para)}&ultimo_id=${encodeURIComponent(ultimoId)}&tipo=${tipoA}`
-//       })
-//          .then(response => response.json())
-//          .then(mensagens => {
-//             const conteudo = document.getElementById("conteudo");
-
-//             mensagens.forEach(msg => {
-//                const div = document.createElement("div");
-//                div.classList.add("caixa");
-
-//                // Função para renderizar os anexos
-//                const renderizarAnexos = (anexos) => {
-//                   if (!anexos || anexos.length === 0) return '';
-
-//                   let html = '<div class="anexos">';
-//                   anexos.forEach(anexo => {
-//                      // Adiciona o prefixo "vendor/" ao caminho do anexo
-//                      const caminhoCompleto = `vendor/${anexo}`;
-
-//                      // Verifica se o anexo é uma imagem (baseado na extensão)
-//                      const extensao = anexo.split('.').pop().toLowerCase();
-//                      const extensoesImagens = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-//                      const extensoesMusicas = ['mp3', 'aac', 'm4a', 'ogg', 'flac', 'wav', 'opus'];
-//                      const extensoesVideos = ['mp4', 'webm', 'mov', 'm4v'];
-//                      const extensoesExcel = ['xlsx', 'xls', 'xlsm', 'xlsb', 'xltx', 'xltm', 'csv'];
-//                      const extensoesWord = ['docx', 'doc', 'docm', 'dotx', 'dotm', 'rtf'];
-//                      const extensoesPowerPoint = ['pptx', 'ppt', 'pptm', 'potx', 'potm', 'ppsx', 'ppsm', 'pps'];
-
-//                      imgdefault = "vendor/assets/img/";
-//                      switch (extensao) {
-//                         case "pdf":
-//                            imgdefault += "PDF.png";
-//                            break;
-//                         case "7zip":
-//                            imgdefault += "7zip.png";
-//                            break;
-//                         case "rar":
-//                            imgdefault += "RAR.png";
-//                            break;
-//                         default:
-//                            if (extensoesMusicas.includes(extensao)) {
-//                               imgdefault += "Music.png";
-//                            } else if (extensoesVideos.includes(extensao)) {
-//                               imgdefault += "Google Play Movies And Tv.png";
-//                            } else if (extensoesExcel.includes(extensao)) {
-//                               imgdefault += "Microsoft Excel 2019.png";
-//                            } else if (extensoesExcel.includes(extensoesWord)) {
-//                               imgdefault += "Microsoft Word 2019.png";
-//                            } else if (extensoesExcel.includes(extensoesPowerPoint)) {
-//                               imgdefault += "Microsoft PowerPoint 2019.png";
-//                            } else {
-//                               imgdefault += "Archive Folder.png";
-
-//                            }
-
-//                      }
-
-
-//                      if (extensoesImagens.includes(extensao)) {
-//                         // Se for uma imagem, exibe diretamente
-//                         html += `
-//                            <a href="vendor/${caminhoCompleto}" target="_blank" class="anexo-link">
-//                               <img src="vendor/${caminhoCompleto}" alt="Anexo" class="anexo-imagem">
-//                            </a>
-//                         `;
-//                      } else {
-//                         // Se não for uma imagem, exibe como um link
-//                         html += `
-//                            <a href="vendor/${caminhoCompleto}" target="_blank" class="anexo-link">
-//                               <img src="${imgdefault}" alt="Anexo" class="anexo-imagem">
-//                            </a><br>
-//                         `;
-//                      }
-//                   });
-//                   html += '</div>';
-//                   return html;
-//                };
-
-//                if (msg.MENSAGENS_ATTB_DE == Number(LOGADO)) {
-//                   // Mensagem enviada pelo usuário logado (emissor)
-//                   div.innerHTML = `
-//                      <div class="caixa">
-//                         <div class="emissor">
-//                            <div class="texto">
-//                               <div class="datahora" title='data e hora de envio'>
-//                                  ${msg.MENSAGENS_ATTB_CRIADO_AOS}
-//                               </div>
-//                               <div class="msg">
-//                                  ${msg.MENSAGENS_ATTB_MSG || ''}
-//                               </div>
-//                               ${renderizarAnexos(msg.ANEXOS)}
-//                            </div>
-//                         </div>
-//                      </div>
-//                   `;
-//                } else {
-//                   // Mensagem recebida de outro usuário (receptor)
-//                   div.innerHTML = `
-//                      <div class="caixa">
-//                         <div class="receptor">
-//                            <img class='receptor-img' src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?t=st=1743555705~exp=1743559305~hmac=fb04ae28a8512fe8af76eb993e6dea68c3de7e38691ed699887af3a51666ca34&w=740" alt="">
-//                            <div class="texto">
-//                               <div class="datahora" title='data e hora de envio'>
-//                                  <b>${tipoA == 2 ? msg.USER_ATTB_NOME : ''}</b>
-//                               </div>
-//                               <div class="msg">
-//                                  ${msg.MENSAGENS_ATTB_MSG || ''}
-//                               </div>
-//                               ${renderizarAnexos(msg.ANEXOS)}
-//                               <div class="datahora" title='data e hora de envio'>
-//                                  ${msg.MENSAGENS_ATTB_CRIADO_AOS}
-//                               </div>
-//                            </div>
-//                         </div>
-//                      </div>
-//                   `;
-//                }
-
-//                conteudo.appendChild(div);
-
-//                ultimoId = Number(msg.MENSAGENS_ATTB_ID); // Atualiza último ID
-
-//                document.getElementById("conteudo").scrollTop = conteudo.scrollHeight;
-//             });
-//          })
-//          .catch(error => {
-//             mostrarAlert("Erro ao carregar mensagens: " + error);
-//             console.error("Erro ao carregar mensagens:", error);
-//          });
-//    }
-// }
-
-// function carregarMensagens(para) {
-//    if (document.getElementById("conteudo")) {
-//       fetch("vendor/backend/sudomake.php", {
-//          method: "POST",
-//          headers: {
-//             "Content-Type": "application/x-www-form-urlencoded",
-//          },
-//          body: `para=${encodeURIComponent(para)}&ultimo_id=${encodeURIComponent(ultimoId)}&tipo=${tipoA}`
-//       })
-//          .then(response => response.json())
-//          .then(mensagens => {
-//             const conteudo = document.getElementById("conteudo");
-
-//             mensagens.forEach(msg => {
-//                const div = document.createElement("div");
-//                div.classList.add("caixa");
-//                if (msg.MENSAGENS_ATTB_DE == Number(LOGADO)) {
-
-//                   div.innerHTML = `
-
-//                         <div class="caixa">
-//        <div class="emissor">
-//         <div class="texto">
-//           <div class="datahora" title='data e hora de envio'>${msg.MENSAGENS_ATTB_CRIADO_AOS}</div>
-//           <div class="msg">
-//           ${msg.MENSAGENS_ATTB_MSG}
-//           </div>
-//         </div>
-//         </div>
-//       </div>
-//                     `;
-//                } else {
-//                   // alert(msg.MENSAGENS_ATTB_DE);
-//                   // alert(LOGADO);
-//                   div.innerHTML = `
-//                         <div class="caixa">
-//        <div class="receptor">
-//         <img src="https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg?t=st=1743555705~exp=1743559305~hmac=fb04ae28a8512fe8af76eb993e6dea68c3de7e38691ed699887af3a51666ca34&w=740" alt="">
-//         <div class="texto">
-//           <div class="datahora" title='data e hora de envio'><b>${tipoA == 2 ? msg.USER_ATTB_NOME : ''}</b></div>
-//           <div class="msg">
-//           ${msg.MENSAGENS_ATTB_MSG}
-//           </div>
-//           <div class="datahora" title='data e hora de envio'>${msg.MENSAGENS_ATTB_CRIADO_AOS}</div>
-//         </div>
-//         </div>
-//       </div>
-//                         `;
-
-//                }
-
-//                conteudo.appendChild(div);
-
-//                ultimoId = Number(msg.MENSAGENS_ATTB_ID); // Atualiza último ID
-
-//                document.getElementById("conteudo").scrollTop = conteudo.scrollHeight;
-//             });
-//          })
-//          .catch(error => {
-//             mostrarAlert("Erro ao carregar mensagens: " + error)
-//             console.error("Erro ao carregar mensagens:", error)
-//          });
-//    }
-// }
 
 // Função síncrona para obter o último ID de mensagem de um usuário
 function ultimoID_do(para) {

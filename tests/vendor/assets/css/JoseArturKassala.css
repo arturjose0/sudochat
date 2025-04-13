@@ -934,32 +934,72 @@ button {
     }
   }
 }
+
+body {
+  margin: 0; /* Remove default margins */
+  height: 100dvh; /* Use dynamic viewport height to account for browser UI */
+  width: 100vw;
+  overflow: hidden; /* Prevent scrolling on the body */
+}
+
 .principal-hide {
   display: grid;
-  grid-template-columns: 3em 3em 1fr;
-  height: 100vh;
+  grid-template-areas:
+    "listas mensagens"
+    "listas ferramentas";
+  grid-template-columns: 3.5em 1fr; /* Slightly increased listas width for better legibility */
+  grid-template-rows: 1fr 4em; /* Keep mensagens as 1fr, ferramentas as 4em */
+  height: 100dvh; /* Use dynamic viewport height */
   width: 100vw;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top); /* Account for status bar/notch */
+  padding-bottom: env(safe-area-inset-bottom); /* Account for Safari toolbar */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  margin: 0; /* Remove margin to prevent overlap */
 
   .ferramentas {
     border: 2px solid #edf0f6;
     display: flex;
-    flex-direction: column;
+    /* flex-direction: column; Ensure vertical arrangement as in simulation */
     justify-content: space-between;
     align-items: center;
-    padding: 0.5em;
-    height: 100vh;
+    grid-area: ferramentas;
+    margin: 0.5em;
+    box-sizing: border-box;
     .avatar {
       text-align: center;
       img {
         width: 35px;
-        /* height: 90%; */
         border-radius: 50%;
+      }
+
+      b {
+        display: none;
       }
     }
 
     ul {
-      display: grid;
+      display: flex;
+      /* flex-direction: column; Ensure vertical arrangement */
       gap: 0.7em;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    a {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-width: 48px;
+      min-height: 48px;
+    }
+
+    .sair {
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
   }
 
@@ -967,7 +1007,8 @@ button {
     display: grid;
     grid-template-rows: 4em 2.7em 3em 1fr;
     padding: 7px;
-
+    grid-area: listas;
+    box-sizing: border-box;
     .topo {
       border-bottom: 1px solid #edf0f6;
       display: flex;
@@ -988,6 +1029,8 @@ button {
         display: flex;
         justify-content: center;
         align-items: center;
+        min-width: 48px;
+        min-height: 48px;
         svg {
           width: 1.5em;
           height: 1.5em;
@@ -996,16 +1039,13 @@ button {
     }
 
     .pesquisar {
-      /* border: 1px solid #edf0f6; */
       padding: 4px;
 
       form {
         background-color: #eff3f6;
-        /* border: 1px solid black; */
         height: 100%;
         width: 100%;
         display: flex;
-        /* grid-template-columns: 1fr 3em; */
         border-radius: 12px;
         padding: 10px;
         align-items: center;
@@ -1014,12 +1054,17 @@ button {
           all: unset;
           width: 100%;
           height: 100%;
-          font-size: 12px;
+          font-size: 16px; /* Increased for better readability and to prevent zoom */
           display: none;
         }
 
         button {
           background-color: #eff3f6;
+          min-width: 48px;
+          min-height: 48px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
 
           svg {
             width: 20px;
@@ -1029,7 +1074,6 @@ button {
     }
 
     .meio {
-      /* border-bottom: 1px solid #edf0f6; */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -1045,6 +1089,8 @@ button {
         justify-content: center;
         padding: 0.5em;
         color: #78b7ab;
+        min-width: 48px;
+        min-height: 48px;
         svg {
           width: 1.5em;
           height: 1.5em;
@@ -1060,8 +1106,8 @@ button {
       display: flex;
       flex-direction: column;
       gap: 0.2em;
-      max-height: calc(100vh - 11em);
-      overflow-y: auto; /* Adiciona barra de rolagem vertical quando necessário */
+      max-height: calc(100dvh - 11em); /* Use dynamic viewport height */
+      overflow-y: auto;
 
       .mensagem:hover {
         background-color: #edf0f6;
@@ -1075,12 +1121,9 @@ button {
         display: flex;
         justify-content: center;
         align-items: center;
-        /* grid-template-columns: auto 1fr auto; */
-        /* height: 70px; */
         border-radius: 7px;
         padding: 0.2em;
-        /* align-items: center; */
-        /* justify-content: left; */
+        min-height: 48px;
 
         .dois {
           margin-left: 10px;
@@ -1104,7 +1147,6 @@ button {
         }
 
         span {
-          /* border-left: 2px solid #edf0f6; */
           font-size: 0.8em;
           color: #a1a1a1;
           height: 100%;
@@ -1119,31 +1161,25 @@ button {
 
   .mensagens {
     display: grid;
-    /* grid-template-columns: 1fr 3.3em; */
-    /* grid-template-columns: 1fr 15em; */
     background-color: #edf0f6;
     border-radius: 12px;
-    margin: 12px;
-
+    margin: 12px 12px 0 12px;
+    grid-area: mensagens;
+    box-sizing: border-box;
     .conteudos {
       background-color: #edf0f6;
       display: grid;
       grid-template-rows: 1fr 3em;
       border-radius: 10px;
       padding: 12px;
-      /* border: 1px solid red; */
 
       .conteudo {
-        max-height: calc(
-          100vh - 7em
-        ); /* Define a altura máxima antes de ativar a rolagem */
-        overflow-y: auto; /* Habilita a rolagem vertical quando necessário */
+        max-height: calc(100dvh - 10em); /* Use dynamic viewport height */
+        overflow-y: auto;
         display: flex;
-        flex-direction: column; /* Garantir que o conteúdo fique empilhado de forma vertical */
+        flex-direction: column;
 
         .caixa {
-          /* border: 1px solid; */
-
           .receptor,
           .emissor {
             display: flex;
@@ -1151,7 +1187,6 @@ button {
             gap: 5px;
 
             .texto {
-              /* border: 1px solid; */
               max-width: 70%;
             }
 
@@ -1165,31 +1200,28 @@ button {
               background-color: #fff;
               border-radius: 20px;
               position: relative;
-              box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Sombras suaves para o balão */
-              max-width: 100%; /* Limita a largura para dar um efeito mais de "balão" */
-              margin: 10px 0; /* Espaçamento entre as mensagens */
-              font-size: 16px; /* Tamanho da fonte */
+              box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+              max-width: 100%;
+              margin: 10px 0;
+              font-size: 16px;
               line-height: 1.4;
             }
 
             .msg::after {
               content: "";
               position: absolute;
-              bottom: -10px; /* Coloca a seta logo abaixo do balão */
-              left: 0; /* Posiciona a seta no canto inferior esquerdo */
-              transform: translateX(
-                -50%
-              ); /* Garante que a seta esteja no centro exato */
+              bottom: -10px;
+              left: 0;
+              transform: translateX(-50%);
               width: 0;
               height: 0;
-              border-left: 10px solid transparent; /* Bordas para criar o triângulo */
-              border-right: 10px solid transparent; /* Bordas para criar o triângulo */
-              border-top: 10px solid #fff; /* Cor da seta (mesma cor do balão) */
+              border-left: 10px solid transparent;
+              border-right: 10px solid transparent;
+              border-top: 10px solid #fff;
             }
           }
 
           .emissor {
-            /* justify-self: end; */
             display: flex;
             justify-content: end;
             .msg {
@@ -1197,10 +1229,10 @@ button {
               background-color: #ced2e3;
               border-radius: 20px;
               position: relative;
-              box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Sombras suaves para o balão */
-              max-width: 100%; /* Limita a largura para dar um efeito mais de "balão" */
-              margin: 10px 0; /* Espaçamento entre as mensagens */
-              font-size: 16px; /* Tamanho da fonte */
+              box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+              max-width: 100%;
+              margin: 10px 0;
+              font-size: 16px;
               line-height: 1.4;
             }
 
@@ -1219,10 +1251,7 @@ button {
 
       form {
         display: flex;
-        /* grid-template-columns: auto 40px 40px; */
         padding: 0.4em;
-        /* justify-content: center; */
-        /* border: 1px solid; */
         border-radius: 12px;
         background-color: #fff;
         align-items: center;
@@ -1232,13 +1261,18 @@ button {
           border: none;
           padding: 1em;
           border-radius: 12px 0px 0px 12px;
-          font-size: 12px;
+          font-size: 16px; /* Increased for better readability and to prevent zoom */
         }
 
         button {
           background-color: #fff;
           height: 100%;
           width: 45px;
+          min-width: 48px;
+          min-height: 48px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
         }
 
         button[type="submit"] {
@@ -1258,20 +1292,15 @@ button {
 
     .recursos {
       background-color: #fff;
-      /* border: 1px solid; */
       display: grid;
       grid-template-rows: 3em auto 1fr;
-      /* flex-direction: column; */
-      /* justify-content: space-between; */
       padding: 0.6em;
 
       .avatar {
-        /* border: 1px solid; */
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        text-align: center;
         text-align: center;
         p {
           color: #a1a1a4;
@@ -1307,6 +1336,7 @@ button {
             display: flex;
             gap: 5px;
             align-items: center;
+            min-height: 48px;
             .caixa {
               width: 40px;
               height: 40px;
@@ -1328,6 +1358,115 @@ button {
         }
       }
     }
+  }
+}
+
+/* Modal styles (added to ensure the modal doesn't interfere with the layout) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  z-index: 1000;
+  overflow: auto;
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 5% auto;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-sizing: border-box;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #edf0f6;
+  padding-bottom: 10px;
+}
+
+.fechar-modal {
+  cursor: pointer;
+  font-size: 24px;
+  color: #a1a1a1;
+}
+
+.modal-body {
+  margin: 20px 0;
+}
+
+.input-grupo,
+.input-busca {
+  margin-bottom: 15px;
+}
+
+.input-grupo label,
+.input-busca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: #333;
+}
+
+.input-grupo input,
+.input-busca input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #edf0f6;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.lista-usuarios {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #edf0f6;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-cancelar,
+.btn-criar {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-cancelar {
+  background-color: #edf0f6;
+  color: #333;
+}
+
+.btn-criar {
+  background-color: #00a287;
+  color: #fff;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .principal-hide {
+    grid-template-columns: 3em 1fr;
+    grid-template-rows: 1fr 3em;
+  }
+
+  .modal-content {
+    width: 95%;
+    margin: 10% auto;
   }
 }
 /* } */

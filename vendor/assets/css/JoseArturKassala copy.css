@@ -943,10 +943,8 @@ button {
 }
 
 body {
-  margin: 0; /* Remove default margins */
-  height: 100dvh; /* Use dynamic viewport height to account for browser UI */
+  height: 100vh;
   width: 100vw;
-  overflow: hidden; /* Prevent scrolling on the body */
 }
 
 .principal-hide {
@@ -954,26 +952,20 @@ body {
   grid-template-areas:
     "listas mensagens"
     "listas ferramentas";
-  grid-template-columns: 3.5em 1fr; /* Slightly increased listas width for better legibility */
-  grid-template-rows: 1fr 4em; /* Keep mensagens as 1fr, ferramentas as 4em */
-  height: 100dvh; /* Use dynamic viewport height */
-  width: 100vw;
-  box-sizing: border-box;
-  padding-top: env(safe-area-inset-top); /* Account for status bar/notch */
-  padding-bottom: env(safe-area-inset-bottom); /* Account for Safari toolbar */
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-  margin: 0; /* Remove margin to prevent overlap */
-
+  grid-template-columns: 3em 1fr; /* Two columns: 3em for listas, 1fr for mensagens/ferramentas */
+  grid-template-rows: 1fr 4em; /* Two rows: 1fr for mensagens, 3em for ferramentas */
+  height: 100%;
+  width: 100%;
+  margin-bottom: 0.5em;
   .ferramentas {
-    /* border: 2px solid #edf0f6; */
+    border: 2px solid #edf0f6;
     display: flex;
-    /* flex-direction: column; Ensure vertical arrangement as in simulation */
+    /* flex-direction: column; */
     justify-content: space-between;
     align-items: center;
-    grid-area: ferramentas;
+    padding: 0.5em;
+    grid-area: ferramentas; /* Removed height: 100vh to let the grid row define the height */
     margin: 0.5em;
-    box-sizing: border-box;
     .avatar {
       text-align: center;
       img {
@@ -988,25 +980,7 @@ body {
 
     ul {
       display: flex;
-      /* flex-direction: column; Ensure vertical arrangement */
       gap: 0.7em;
-      padding: 0;
-      margin: 0;
-      list-style: none;
-    }
-
-    a {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-width: 48px;
-      min-height: 48px;
-    }
-
-    .sair {
-      display: flex;
-      justify-content: center;
-      align-items: center;
     }
   }
 
@@ -1015,7 +989,6 @@ body {
     grid-template-rows: 4em 2.7em 3em 1fr;
     padding: 7px;
     grid-area: listas;
-    /* box-sizing: border-box; */
     .topo {
       border-bottom: 1px solid #edf0f6;
       display: flex;
@@ -1036,8 +1009,6 @@ body {
         display: flex;
         justify-content: center;
         align-items: center;
-        /* min-width: 48px;
-        min-height: 48px; */
         svg {
           width: 1.5em;
           height: 1.5em;
@@ -1061,17 +1032,12 @@ body {
           all: unset;
           width: 100%;
           height: 100%;
-          font-size: 12px; /* Increased for better readability and to prevent zoom */
+          font-size: 12px;
           display: none;
         }
 
         button {
           background-color: #eff3f6;
-          /* min-width: 48px;
-          min-height: 48px;
-          display: flex;
-          justify-content: center;
-          align-items: center; */
 
           svg {
             width: 20px;
@@ -1096,8 +1062,6 @@ body {
         justify-content: center;
         padding: 0.5em;
         color: #78b7ab;
-        /* min-width: 48px;
-        min-height: 48px; */
         svg {
           width: 1.5em;
           height: 1.5em;
@@ -1113,7 +1077,7 @@ body {
       display: flex;
       flex-direction: column;
       gap: 0.2em;
-      max-height: calc(100dvh - 11em); /* Use dynamic viewport height */
+      max-height: calc(100vh - 11em);
       overflow-y: auto;
 
       .mensagem:hover {
@@ -1130,7 +1094,6 @@ body {
         align-items: center;
         border-radius: 7px;
         padding: 0.2em;
-        /* min-height: 48px; */
 
         .dois {
           margin-left: 10px;
@@ -1172,16 +1135,18 @@ body {
     border-radius: 12px;
     margin: 12px 12px 0 12px;
     grid-area: mensagens;
-    /* box-sizing: border-box; */
+    /* border: 1px solid blue; */
     .conteudos {
       background-color: #edf0f6;
       display: grid;
       grid-template-rows: 1fr 3em;
       border-radius: 10px;
       padding: 12px;
+      /* border: 1px solid red; */
 
       .conteudo {
-        max-height: calc(100dvh - 10em); /* Use dynamic viewport height */
+        max-height: calc(100vh - 10em);
+        /* height: 100%; */
         overflow-y: auto;
         display: flex;
         flex-direction: column;
@@ -1195,12 +1160,6 @@ body {
 
             .texto {
               max-width: 70%;
-            }
-
-            .texto:hover {
-              .delete-message-btn {
-                display: block;
-              }
             }
 
             .datahora {
@@ -1274,18 +1233,13 @@ body {
           border: none;
           padding: 1em;
           border-radius: 12px 0px 0px 12px;
-          font-size: 16px; /* Increased for better readability and to prevent zoom */
+          font-size: 12px;
         }
 
         button {
           background-color: #fff;
           height: 100%;
           width: 45px;
-          /* min-width: 48px;
-          min-height: 48px;
-          display: flex;
-          justify-content: center;
-          align-items: center; */
         }
 
         button[type="submit"] {
@@ -1349,7 +1303,6 @@ body {
             display: flex;
             gap: 5px;
             align-items: center;
-            /* min-height: 48px; */
             .caixa {
               width: 40px;
               height: 40px;
@@ -1373,117 +1326,4 @@ body {
     }
   }
 }
-
-/* Modal styles (added to ensure the modal doesn't interfere with the layout) */
-.modal {
-  display: none; /* Hidden by default */
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-  z-index: 1000;
-  overflow: auto;
-}
-
-.modal-content {
-  background-color: #fff;
-  margin: 5% auto;
-  padding: 20px;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 500px;
-  box-sizing: border-box;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #edf0f6;
-  padding-bottom: 10px;
-}
-
-.fechar-modal {
-  cursor: pointer;
-  font-size: 24px;
-  color: #a1a1a1;
-}
-
-.modal-body {
-  margin: 20px 0;
-}
-
-.input-grupo,
-.input-busca {
-  margin-bottom: 15px;
-}
-
-.input-grupo label,
-.input-busca {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 16px;
-  color: #333;
-}
-
-.input-grupo input,
-.input-busca input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #edf0f6;
-  border-radius: 8px;
-  font-size: 16px;
-}
-
-.lista-usuarios {
-  max-height: 200px;
-  overflow-y: auto;
-  border: 1px solid #edf0f6;
-  border-radius: 8px;
-  padding: 10px;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.btn-cancelar,
-.btn-criar {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.btn-cancelar {
-  background-color: #edf0f6;
-  color: #333;
-}
-
-.btn-criar {
-  background-color: #00a287;
-  color: #fff;
-}
-
-/* Responsive adjustments for smaller screens */
-@media (max-width: 768px) {
-  .principal-hide {
-    grid-template-columns: 3em 1fr;
-    grid-template-rows: 1fr 3em;
-  }
-
-  .modal-content {
-    width: 95%;
-    margin: 10% auto;
-  }
-}
 /* } */
-
-body {
-  transition: all 1s ease;
-}
